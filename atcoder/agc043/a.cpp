@@ -9,7 +9,7 @@ const int N = 110, INF = 0x3f3f3f3f;
 
 #define x first
 #define y second
-int dist[N][N];
+long long dist[N][N];
 char g[N][N];
 
 
@@ -20,6 +20,7 @@ int n, m;
 int dx[] = {1, 0};
 int dy[] = {0, 1};
 
+// count the consecutive number of black blocks.
 
 void bfs() {
 
@@ -39,13 +40,28 @@ void bfs() {
             if (x > n || y > m) {
                 continue;
             }
-            if (dist[x][y] == INF) {
+            
+            if (dist[x][y] == -1) {
                 if (g[x][y] == '#') {
-                    dist[x][y] = dist[t.x][t.y] + 1;
-                    dq.push_back({x, y});
+                    if(g[t.x][t.y] =='#') {
+                        // if the current block is same as the former block, do not change the operation number, we can add it to the front.
+                        dist[x][y] = dist[t.x][t.y];
+                        dq.push_front({x, y});
+                    }
+                    else {
+                        dist[x][y] = dist[t.x][t.y] + 1; // since we are counting the black blocks number,
+                        dq.push_back({x, y});
+                    }
                 } else {
-                    dist[x][y] = dist[t.x][t.y];
-                    dq.push_front({x , y});
+                    if(g[t.x][t.y] =='.') {
+                        // if the current block is same as the former block, do not change the operation number, we can add it to the front.
+                        dist[x][y] = dist[t.x][t.y];
+                        dq.push_front({x, y});
+                    }
+                    else { // the color is not same, it might affect the following operation, we add it to the back.
+                        dist[x][y] = dist[t.x][t.y];
+                        dq.push_back({x, y});
+                    }
                 }
             }
         }
@@ -55,7 +71,7 @@ void bfs() {
 void print() {
     for (int i = 1; i <= n; i ++) {
         for (int j = 1; j <= n; j ++) {
-            if (dist[i][j] == INF) cout << "x " ;
+            if (dist[i][j] == -1) cout << "x " ;
             else cout << dist[i][j] << " ";
         }
 
@@ -72,9 +88,9 @@ int main() {
         }
 
 
-    memset(dist, 0x3f ,sizeof dist);
+    memset(dist, -1 ,sizeof dist);
 
     bfs();
-    // print();
+    //print();
     cout << dist[n][m] << endl;
 }
