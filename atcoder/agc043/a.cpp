@@ -17,8 +17,8 @@ typedef pair<int,int> PII;
 
 int n, m;
 
-int dx[] = {-1, 0, 1, 0};
-int dy[] = {0, -1, 0, 1};
+int dx[] = {1, 0};
+int dy[] = {0, 1};
 
 
 void bfs() {
@@ -33,10 +33,10 @@ void bfs() {
         PII t = dq.front();
         dq.pop_front();
 
-        for (int i = 0; i < 4; i ++) {
+        for (int i = 0; i < 2; i ++) {
             int x = t.x + dx[i], y = t.y + dy[i];
 
-            if (x == 0 || y == 0 || x > n || y > m) {
+            if (x > n || y > m) {
                 continue;
             }
             if (dist[x][y] == INF) {
