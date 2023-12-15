@@ -7,6 +7,9 @@
         "iomanip": "cpp",
         "complex": "cpp",
         "chrono": "cpp",
-        "deque": "cpp"
+        "deque": "cpp",
+        "cstring": "cpp",
+        "vector": "cpp",
+        "set": "cpp"
     }
 }
