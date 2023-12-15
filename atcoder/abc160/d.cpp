@@ -49,7 +49,7 @@ int main()
     for (int i = n - 1; i >= 1; i --)
         for (int j = i + 1; j <= n; j ++) {
                 dist[i][j] = min(dist[i][j], min(dist[i][j - 1], dist[i + 1][j] ) + 1);
-                dist[j][i] = dist[i][j]; // min(dist[j][i], min(dist[j - 1][i], dist[j][i + 1] ) )+ 1;
+                // dist[j][i] = dist[i][j]; // min(dist[j][i], min(dist[j - 1][i], dist[j][i + 1] ) )+ 1;
             }
 
     // print();
@@ -59,7 +59,7 @@ int main()
     for (int i = 1; i <= n; i ++)
         for (int j = i + 1; j <= n; j ++) {
                 dist[i][j] = min(dist[i][j], dist[i][x] + dist[x][y] + dist[y][j]);
-                dist[j][i] = dist[i][j];
+                // dist[j][i] = dist[i][j];
         }
 
 
