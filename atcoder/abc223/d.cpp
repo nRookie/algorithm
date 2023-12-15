@@ -17,7 +17,7 @@ void add(int a, int b) {
 int n, m;
 int main() {
     memset(h , -1, sizeof h);
-    cin >> n, m;
+    cin >> n >>  m;
 
     while(m --) {
         int a, b;
@@ -27,31 +27,62 @@ int main() {
         ind[b]++;
     }
     queue<int> q;
+
+    vector<int> res; 
+    int cnt  = 0;
+    priority_queue<int, vector<int>, greater<int>> heap;
+
     for (int i = 1; i <= n; i ++) {
-        if (ind[i] == 1) {
-            q.push(i);
+        if (ind[i] == 0) {
+            heap.push(i);
         }
     }
-    vector<int> ans;
 
-    while(q.size()) {
-        int t = q.front();
-        q.pop();
-        ans.push_back(t);
-        for (int i = h[t]; ~i; i = ne[i]) {
+    while (heap.size()) {
+        int t = heap.top();
+        heap.pop();
+        res.push_back(t);
+        for (int i = h[t];  ~i; i = ne[i]) {
             int j = e[i];
             ind[j] --;
-
-            if(ind[j] == 0) {
-                q.push(j);
+            if (ind[j] == 0) {
+                heap.push(j);
             }
         }
     }
 
-    for (auto x: ans) cout << x << " ";
+
+    // while(q.size() ) {
+
+    //     while(heap.size()) {
+    //         res.push_back(heap.top());
+    //         heap.pop();
+    //     }
+    //     int t = q.front();
+    //     q.pop();
+    //     for (int i = h[t]; ~i; i = ne[i]) {
+    //         int j = e[i];
+    //         ind[j] --;
+
+    //         if(ind[j] == 0) {
+    //             q.push(j);
+    //             heap.push(j);
+    //         }
+    //     }
+    // }
+
+    if (res.size() != n) {
+        cout << -1 << endl;
+        return 0;
+    }
+    for (auto x: res) cout << x << " ";
 
     cout << endl;
 
     return 0;
 
 }
+
+
+
+// topological sort with heap
