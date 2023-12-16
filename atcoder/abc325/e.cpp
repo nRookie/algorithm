@@ -4,7 +4,7 @@
 using namespace std;
 
 
-
+// only change one time, so we can do that in a reverse order
 const int N = 1010;
 
 typedef long long ll;
