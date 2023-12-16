@@ -4,12 +4,14 @@
 using namespace std;
 
 
-int r[13];
+typedef long long ll;
+
+ll r[13];
 int main() {
     r[0] = 1;
     int n ;
     cin >> n;
-    for (int i = 1; i < 12; i ++) {
+    for (int i = 1; i <= 12; i ++) {
         r[i] = r[i - 1] * 10 + 1;
     }
 
@@ -19,12 +21,10 @@ int main() {
                 n -= 1;
                 if (n == 0)  {
                     cout <<(r[i] + r[j] + r[k]);
+                    break;
                 }
             }
         }
     }
-
-    cout << endl;
-
     return 0;
 }
