@@ -20,7 +20,7 @@ int main() {
     for (int i = 0; i < n; i ++) {
         cin >> q[i].x >> q[i].y;
     }
-
+    size_t maxx = 0;
     set<int> myset;
     for (int i = n - 1; i >= 0; i --) {
         if (q[i].x == 2) {
@@ -31,11 +31,19 @@ int main() {
                 st[i] = true;
             }
         }
+
+        maxx = max(maxx, myset.size());
     }
 
-    for (int i = 0; i < n; i ++) {
-        cout << st[i] << " ";
+
+    if (myset.size() != 0) {
+        cout << -1 << endl;
+    } else {
+        cout << maxx << endl;
+        for (int i = 0; i < n; i ++) {
+            if (q[i].x == 1)
+            cout << st[i] << " ";
+        }
     }
-    cout << endl;
     return 0;
 }
