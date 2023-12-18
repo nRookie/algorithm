@@ -1,6 +1,7 @@
 #include<iostream>
 #include<cstring>
 #include<set>
+#include<vector>
 using namespace std;
 
 
@@ -14,36 +15,43 @@ typedef pair<int, int> PII;
 PII q[N];
 int n;
 bool st[N];
+int k = 0, km = 0;
 int main() {
     cin >> n;
-
+    vector<int> sol;
     for (int i = 0; i < n; i ++) {
         cin >> q[i].x >> q[i].y;
     }
-    size_t maxx = 0;
-    set<int> myset;
-    for (int i = n - 1; i >= 0; i --) {
-        if (q[i].x == 2) {
-            myset.insert(q[i].y);
-        } else {
-            if(myset.count(q[i].y)) {
-                myset.erase(q[i].y);
-                st[i] = true;
-            }
-        }
+    
+    vector<int> myset(n + 1);
 
-        maxx = max(maxx, myset.size());
+
+    for (int i = n - 1; i >= 0; i --) {
+        if (q[i].x == 1) {
+            if (myset[q[i].y]  > 0 ) {
+                sol.push_back(1);
+                myset[q[i].y] -= 1;
+                k -=1;
+            } else {
+                sol.push_back(0);
+            }
+        } else {
+            myset[q[i].y] += 1;
+            k += 1;
+            km = max(k, km);
+        }
     }
 
-
-    if (myset.size() != 0) {
-        cout << -1 << endl;
-    } else {
-        cout << maxx << endl;
-        for (int i = 0; i < n; i ++) {
-            if (q[i].x == 1)
-            cout << st[i] << " ";
+    for (auto x: myset) {
+        if (x > 0) {
+            cout << -1 << endl;
+            return 0;
         }
+    }
+
+    cout << km << endl;
+    for (int i = sol.size() - 1 ; i >= 0 ; i --) {
+        cout << sol[i] << " ";
     }
     return 0;
 }
