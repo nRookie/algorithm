@@ -43,7 +43,7 @@ int main() {
     //     cout << suf[i] << " ";
     // cout << endl;
     int res = 1e9;
-    for (int i = 0; i <= m; i +=2 ) {
+    for (int i = 0; i <= m; i += 2 ) {
         res = min(res, pre[i] + suf[i]);
     }
     cout << res << endl;
