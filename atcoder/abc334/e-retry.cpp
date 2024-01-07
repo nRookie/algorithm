@@ -7,23 +7,22 @@ using namespace std;
 
 const int N = 1010;
 char g[N][N];
-bool st[N][N];
+int st[N][N];
 int n, m;
 const int MOD = 998244353;
 
 typedef long long LL;
 int dx[] = {-1, 0, 1 , 0};
 int dy[] = {0, -1, 0, 1};
-unordered_map<LL,LL> myHash;
+unordered_map<int,int> myHash;
 
-LL bcnt = -1;
+LL green = 0;
 int bfs(int start) {
     queue<int> q;
     q.push(start);
-    bcnt++;
     while(q.size()) {
         int t= q.front();
-        myHash[t] = bcnt;
+        myHash[t] = green;
         int x = t / m, y = t % m;
         q.pop();
         
@@ -59,54 +58,50 @@ long long qmi(long long a, long long k, long long p) {
 
 int main() {
 
- 
     cin >> n >> m;
     long long red = 0;
     for (int i = 0; i < n; i ++)
         for (int j = 0; j < m; j ++) {
             cin >> g[i][j];
-            if (g[i][j] == '.') red ++;
         }
 
-    long long sum = 0;
     for (int i = 0; i < n; i ++)
     for (int j = 0; j < m; j ++) {
-        if (g[i][j] =='#' && st[i][j] == false )  {
+        if (g[i][j] =='#' && st[i][j] == 0 )  {
             st[i][j] = true;
-            sum += bfs(i * m + j);
+            green ++;
+            bfs(i * m + j);
         }
     }
 
 
-    int res = 0;
+    LL res = 0;
     for (int x = 0; x < n; x ++)
     for (int y = 0; y < m; y ++) {
         if (g[x][y] == '.') {
+            red ++ ;
             set<int> s;
             for (int i = 0; i < 4; i ++) {
                 int a = x + dx[i], b = y + dy[i];
                 if (a >= n || a < 0 || b >= m || b < 0) {
                     continue;
                 }
-                if (g[a][b] == '#') {
-                    if (s.count(myHash[a * m + b]) > 0) {
-                    } else {
-                        s.insert(myHash[a * m + b]);
-                    }
-                }
+                if (myHash.count(a * m + b))
+                s.insert(myHash[a * m + b]);
             }
             // cout << x << " " << y << endl;
-            // cout << sum - (cnt - 1) << endl;
-            res += sum - (s.size() - 1);
+            // cout << green - (cnt - 1) << endl;
+            res += green - (s.size() - 1);
         }
     }
  
 
-    long long modInvQ = qmi(red, MOD - 2, MOD);
+    // long long modInvQ = qmi(red, MOD - 2, MOD);
 
     // Calculate R = (P * modInvQ) % MOD
-    long long R = (res % MOD * modInvQ % MOD);
+    LL R = (res % MOD * qmi(red, MOD - 2, MOD) % MOD);
     // cout << res << endl; 
-    cout << R << endl;
+    std::cout << R << endl;
+    return 0;
 
 }
