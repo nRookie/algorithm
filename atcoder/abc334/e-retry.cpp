@@ -61,8 +61,6 @@ int main() {
 
  
     cin >> n >> m;
-
-    queue<int> q;
     long long red = 0;
     for (int i = 0; i < n; i ++)
         for (int j = 0; j < m; j ++) {
@@ -85,7 +83,6 @@ int main() {
     for (int y = 0; y < m; y ++) {
         if (g[x][y] == '.') {
             set<int> s;
-            int cnt = 0;
             for (int i = 0; i < 4; i ++) {
                 int a = x + dx[i], b = y + dy[i];
                 if (a >= n || a < 0 || b >= m || b < 0) {
@@ -94,14 +91,13 @@ int main() {
                 if (g[a][b] == '#') {
                     if (s.count(myHash[a * m + b]) > 0) {
                     } else {
-                        cnt ++;
                         s.insert(myHash[a * m + b]);
                     }
                 }
             }
             // cout << x << " " << y << endl;
             // cout << sum - (cnt - 1) << endl;
-            res += sum - (cnt - 1);
+            res += sum - (s.size() - 1);
         }
     }
  
@@ -109,8 +105,8 @@ int main() {
     long long modInvQ = qmi(red, MOD - 2, MOD);
 
     // Calculate R = (P * modInvQ) % MOD
-    long long R = (res * modInvQ) % MOD;
-    cout << res << endl; 
+    long long R = (res % MOD * modInvQ % MOD);
+    // cout << res << endl; 
     cout << R << endl;
 
 }
