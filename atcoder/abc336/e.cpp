@@ -9,6 +9,7 @@ typedef long long ll;
 // dp[digitIndex][isLessThanN][sumOfDigits][remainder]
 ll dp[20][2][130][130];
 
+// dp[isLessThanN] , let is why we need to add n ++.
 int main() {
     ll n;
     cin >> n;
