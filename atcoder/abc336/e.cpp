@@ -3,59 +3,73 @@
 #include<vector>
 using namespace std;
 
-
-int dp[15][2][130][130];
-
 typedef long long ll;
+
+// Dynamic programming table
+// dp[digitIndex][isLessThanN][sumOfDigits][remainder]
+ll dp[20][2][130][130];
+
 int main() {
     ll n;
-
     cin >> n;
-    n ++;
+    n++; // Increment to include N itself if it's a good integer
 
-    vector<int> digit;
-
-    while(n) {
-        digit.push_back(n%10);
+    // Break the number into its individual digits
+    vector<int> digits;
+    while (n) {
+        digits.push_back(n % 10);
         n /= 10;
     }
+    reverse(digits.begin(), digits.end());
 
-    reverse(digit.begin(), digit.end());
+    int numDigits = digits.size();
+    ll totalGoodIntegers = 0;
 
-    int m = digit.size();
+    // Iterate over all possible sums of digits
+    for (int sumLimit = 1; sumLimit <= 126; sumLimit++) {
+        // Initialize DP table
+        for (int i = 0; i <= numDigits; i++) {
+            for (int isLess = 0; isLess < 2; isLess++) {
+                for (int sum = 0; sum <= sumLimit; sum++) {
+                    for (int remainder = 0; remainder < sumLimit; remainder++) {
+                        dp[i][isLess][sum][remainder] = 0;
+                    }
+                }
+            }
+        }
 
-    int ans = 0;
-    for (int k = 1; k <= 126; k ++) {
-        for (int i = 0; i < m + 1; i ++) 
-            for (int j = 0; j < 2; j ++ )
-                for (int s = 0; s < k + 1; s ++)
-                    for (int r = 0; r < k; r ++)
-                            dp[i][j][s][r] = 0;
-        
+        // Base case
         dp[0][0][0][0] = 1;
 
+        // Build the table
+        for (int i = 0; i < numDigits; i++) {
+            for (int isLess = 0; isLess < 2; isLess++) {
+                for (int sum = 0; sum <= sumLimit; sum++) {
+                    for (int remainder = 0; remainder < sumLimit; remainder++) {
+                        for (int d = 0; d < 10; d++) {
+                            int nextIndex = i + 1;
+                            int nextIsLess = isLess;
+                            int nextSum = sum + d;
+                            int nextRemainder = (remainder * 10 + d) % sumLimit;
 
-        for (int i = 0; i < m; i ++)
-            for (int j = 0; j < 2; j ++)
-                for (int s = 0; s < k + 1; s ++)
-                    for (int r = 0; r < k; r ++) {
-                        for (int d = 0; d < 10; d ++) {
-                            int ni = i + 1;
-                            int nj = j;
-                            int ns = s + d; 
-                            int nr = (r * 10 + d) %k ;
-
-                            if (ns > k ) continue;
-                            if (j == 0) {
-                                if (digit[i] < d) continue;
-                                if (digit[i] > d) nj = 1;
+                            if (nextSum > sumLimit) continue;
+                            if (isLess == 0) {
+                                if (digits[i] < d) continue;
+                                if (digits[i] > d) nextIsLess = 1;
                             }
-                            dp[ni][nj][ns][nr] += dp[i][j][s][r];
+
+                            dp[nextIndex][nextIsLess][nextSum][nextRemainder] += dp[i][isLess][sum][remainder];
                         }
                     }
-    
-        ans += dp[m][1][k][0];
+                }
+            }
+        }
+
+        // Accumulate the count of good integers
+        totalGoodIntegers += dp[numDigits][1][sumLimit][0];
     }
 
-    cout << ans << endl;
+    cout << totalGoodIntegers << endl;
+
+    return 0;
 }
