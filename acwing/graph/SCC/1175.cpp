@@ -77,7 +77,7 @@ int main() {
     unordered_set<LL> S; // (u, v) -> u * 10 00000 + v
 
     for (int i = 1; i <= n; i ++)
-        for (int j = e[i]; ~j; j = ne[j]) {
+        for (int j = h[i]; ~j; j = ne[j]) {
             int k = e[j];
             int a = id[i], b = id[k];
             LL hash = a * 1000000ll + b;
@@ -113,7 +113,7 @@ int main() {
             maxf = f[i];
             sum = g[i];
         }
-        else if (f[i] = maxf) sum = (sum + g[i]) % mod;
+        else if (f[i] == maxf) sum = (sum + g[i]) % mod;
 
     printf("%d\n", maxf);
     printf("%d\n", sum);
