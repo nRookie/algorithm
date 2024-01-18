@@ -66,7 +66,7 @@ int main() {
 
     double l = 0, r = 1e6;
     //两位， 多两位
-    while(l - r > 1e-4) {
+    while(r - l > 1e-4) {
         double mid = (l + r ) / 2;
         if (check(mid)) l = mid;
         else r= mid;
