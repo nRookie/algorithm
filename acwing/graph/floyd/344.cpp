@@ -56,6 +56,7 @@ int main() {
             // 因为是无向图， i 和j是上下翻转， 没有必要
             for (int j = i + 1; j < k; j ++) {
                 //当前方案的最小值，先从i到j， 从j到k
+                // g[j][k], g[k][i] 是边权
                 if ((long long) d[i][j] + g[j][k] + g[k][i] < res) {
                     res =  d[i][j] + g[j][k] + g[k][i];
                     cnt = 0;
