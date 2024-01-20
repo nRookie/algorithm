@@ -29,10 +29,10 @@ ll qmi(int a, int k, int p) {
 int dx[] = {-1, 0, 1, 0};
 int dy[] = {0, -1, 0, 1};
 
-int low[N], dfn[N], timestamp;
+int low[N * N], dfn[N * N], timestamp;
 int stk[N * N + 10], top;
 bool in_stk[N * N + 10];
-int id[N], Size[N];
+int id[N * N], Size[N * N];
 int scc_cnt;
 
 int getLoc(int x, int y) {
@@ -110,7 +110,6 @@ int main() {
         for (int y = 0; y < m; y ++) 
             if (g[x][y] == '.') {
                 red ++;
-                int res = 0;
                 unordered_set<int> s;
                 for (int i = 0; i < 4; i ++) {
                     int a = x + dx[i], b = y + dy[i];
