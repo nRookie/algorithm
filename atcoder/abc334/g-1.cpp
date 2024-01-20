@@ -41,8 +41,8 @@ int getLoc(int x, int y) {
     return x * m + y;
 }
 
-vector<int> f(n * m + 10);
-vector<vector<int>> son(n * m + 10);
+int f[N * N + 1];
+vector<int> son[N * N + 1];
 
 void tarjan(int u, int fa) {
     dfn[u] = low[u] = ++ timestamp;
@@ -54,7 +54,7 @@ void tarjan(int u, int fa) {
         int j = getLoc(a, b);
         if ( a < 0 || b < 0 || a >= n || b >= m ) continue;
         if ( g[a][b] == '.') continue;
- 
+
         if (!dfn[j]) {
             son[u].push_back(j);
             tarjan(j, u);
@@ -118,6 +118,6 @@ int main() {
     cout << R << endl;
     // cout << "scc_cnt:" <<scc_cnt << endl;
     // cout << sum << endl;
-    // cout << red << endl;
+    // cout << green << endl;
     return 0;
 }
