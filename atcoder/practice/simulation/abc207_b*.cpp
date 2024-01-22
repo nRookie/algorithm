@@ -15,9 +15,9 @@ int main() {
     // A <= (C *D - B) x
     // 1 <= (C * D - B) / A 
     int step = 0;
-    int cyan = A, red = 0;
+    long long cyan = A, red = 0;
 
-    for (int i = 1; i < A; i ++ ) {
+    for (int i = 1; i <= A; i ++ ) {
         cyan += B;
         red += C;
         if (cyan <= red * D) {
