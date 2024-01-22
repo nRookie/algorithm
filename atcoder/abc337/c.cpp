@@ -27,7 +27,7 @@ int main() {
     for (int i = head; i != -1; i = next[i]) {
         order.push_back(i + 1);
     }
-    
+
     for (int person : order) {
         cout << person << " ";
     }
@@ -35,3 +35,5 @@ int main() {
 
     return 0;
 }
+
+

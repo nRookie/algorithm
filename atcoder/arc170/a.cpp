@@ -1,65 +1,49 @@
-#include<iostream>
+#include <iostream>
+#include <string>
+#include <algorithm>
+
 using namespace std;
 
+int minOperationsToEqual(string S, string T) {
+    string U;
+    int N = S.size();
+
+    // Create string U based on differences between S and T
+    for (int i = 0; i < N; ++i) {
+        if (S[i] != T[i]) {
+            U += (T[i] == 'A') ? '(' : ')';
+        }
+    }
+
+    // Check if U is a valid parentheses sequence
+    int balance = 0, insertions = 0;
+    for (char ch : U) {
+        if (ch == '(') {
+            balance++;
+        } else {
+            balance--;
+            if (balance < 0) {
+                balance = 0;
+                insertions++;
+            }
+        }
+    }
+
+    // If balance is non-zero, it's impossible to make S equal T
+    if (balance != 0) return -1;
+
+    // Answer is half the length of U plus the number of insertions
+    return U.size() / 2 + insertions;
+}
+
 int main() {
+    int N;
+    string S, T;
 
+    cin >> N >> S >> T;
 
-    string s;
-    string t;
-    int n; 
-    cin >> n;
-    cin >> s;
-    cin >> t;
+    int result = minOperationsToEqual(S, T);
+    cout << result << endl;
 
-    vector<int> ta(n, 0);
-    vector<int> tb(n, 0);
-    vector<int> sa(n, 0);
-    vector<int> sb(n, 0);
-    int res = 0;
-    for (int i = 0; i < n; i ++) {
-        if (i) {
-            ta[i] = ta[i - 1];
-            tb[i] = tb[i - 1];
-            sa[i] = sa[i - 1];
-            sb[i] = sb[i - 1];
-        }
-        if (t[i] == 'B') {
-            tb[i] ++;
-        } else {
-            ta[i] ++;
-        }
-
-        if (s[i] == 'B') {
-            sb[i] ++;
-        } else {
-            sa[i] ++;
-        }
-
-        if (tb[i] > ta[i]) {
-            if (s[i] != 'B') {
-                cout << - 1 << endl;
-                return 0;
-            }
-        }
-    }
-
-    for (int i = 0; i < n; i ++) {
-        if (i) {
-            ta[i] = ta[i - 1];
-            tb[i] = tb[i - 1];
-        }
-        if (t[i] == 'B') {
-            tb[i] ++;
-        } else {
-            ta[i] ++;
-        }
-
-        if (tb[i] > ta[i]) {
-            if (s[i] != 'B') {
-                cout << - 1 << endl;
-                return 0;
-            }
-        }
-    }
     return 0;
 }
