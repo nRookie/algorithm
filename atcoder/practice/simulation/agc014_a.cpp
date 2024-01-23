@@ -10,7 +10,7 @@ int main() {
     int a , b , c ;
     cin >> a >> b >> c;
 
-    if (a == b && b == c && (a & 1 == 0) ) {
+    if (a == b && b == c && ( (a & 1) == 0) ) {
         cout << -1 << endl;
         return 0;
     }
