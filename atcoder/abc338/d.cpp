@@ -1,42 +1,70 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <cmath>
 
 using namespace std;
 
+
+typedef long long ll;
 int main() {
     int N, M;
     cin >> N >> M;
-    vector<int> tour(M);
+
+    vector<int> X(M);
     for (int i = 0; i < M; ++i) {
-        cin >> tour[i];
-        tour[i]--;  // Convert to zero-based index
+        cin >> X[i];
+        --X[i]; // Adjusting to 0-based indexing
     }
 
-    // Function to calculate the direct distance between two islands
-    auto directDistance = [&](int i, int j) {
-        return min(abs(i - j), N - abs(i - j));
+    vector<ll> v(N, 0);
+    vector<ll> diff( N + 1, 0);
+    auto add = [&](int l, int r, int v) {
+        if (l > r) return ;
+        diff[l] += v;
+        diff[r + 1] -= v;
     };
 
-    // Calculate the total distance of the tour
-    int totalDistance = 0;
-    for (int i = 0; i < M - 1; ++i) {
-        totalDistance += directDistance(tour[i], tour[i + 1]);
+    diff[0] = v[0];
+
+    for (int i = 1; i < N; i ++) {
+        diff[i] = v[i] - v[i - 1];
     }
 
-    // Find the minimum possible length of the tour with one bridge closed
-    int minLength = totalDistance;
+
     for (int i = 0; i < M - 1; ++i) {
-        int save = directDistance(tour[i], tour[i + 1]);  // Distance saved by closing a bridge
-        int additional = directDistance(tour[i], (tour[i + 1] + 1) % N) + 1; // Additional distance due to bridge closure
+        int a = X[i];
+        int b = X[i + 1];
 
-        minLength = min(minLength, totalDistance - save + additional);
+        if (a == b) continue; // No movement needed if a and b are the same
+
+        if (a > b) swap(a, b); // Ensure a is less than b
+
+        int clockwiseDistance = b - a;
+        int counterclockwiseDistance = N - clockwiseDistance;
+
+        // Update v for bridges in the clockwise path
+        // for (int j = a; j < b; ++j) {
+        //     v[j] += counterclockwiseDistance;
+        // }
+
+        add(a, b - 1, counterclockwiseDistance);
+
+        // // Update v for bridges in the counterclockwise path
+        // for (int j = b; j != a; j = (j + 1) % N) {
+        //     v[j] += clockwiseDistance;
+        // }
+        add (b, N, clockwiseDistance);
+        if (a != 0)
+        add (0, a - 1, clockwiseDistance);
     }
-    // Check the closing of the bridge between the last and first island in the tour
-    minLength = min(minLength, totalDistance - directDistance(tour[M - 1], tour[0]) + directDistance(tour[M - 1], (tour[0] + 1) % N) + 1);
+    v[0] = diff[0];
+    for (int i = 1; i < N; i ++) {
+        v[i] = diff[i] + v[i - 1];
+    }
 
-    cout << minLength << endl;
+    // Find the minimum value of v
+    ll answer = *min_element(v.begin(), v.end());
+    std::cout << answer << endl;
 
     return 0;
 }

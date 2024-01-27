@@ -69,6 +69,8 @@
         "concepts": "cpp",
         "numeric": "cpp",
         "algorithm": "cpp",
-        "climits": "cpp"
+        "climits": "cpp",
+        "map": "cpp",
+        "stack": "cpp"
     }
 }
