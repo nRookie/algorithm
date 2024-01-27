@@ -53,7 +53,7 @@ int main() {
         // for (int j = b; j != a; j = (j + 1) % N) {
         //     v[j] += clockwiseDistance;
         // }
-        add (b, N, clockwiseDistance);
+        add (b, N - 1, clockwiseDistance);
         if (a != 0)
         add (0, a - 1, clockwiseDistance);
     }
