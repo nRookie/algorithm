@@ -1,45 +1,44 @@
 #include <iostream>
 #include <vector>
-#include <set>
+#include <stack>
 #include <algorithm>
 
 using namespace std;
 
-bool hasIntersection(const vector<pair<int, int>>& chords) {
-    set<int> activeEndpoints;
-
-    vector<pair<int, int>> sortedChords = chords;
-    sort(sortedChords.begin(), sortedChords.end());
-
-    for (const auto& chord : sortedChords) {
-        int A = chord.first;
-        int B = chord.second;
-
-        // Check for intersections
-        auto it = activeEndpoints.lower_bound(A);
-        if (it != activeEndpoints.end() && *it < B) {
-            return true; // Intersection found
-        }
-        activeEndpoints.insert(B);
-    }
-    return false;
-}
-
 int main() {
-    int N;
-    cin >> N;
-    vector<pair<int, int>> chords(N);
-    for (int i = 0; i < N; ++i) {
-        cin >> chords[i].first >> chords[i].second;
-        if (chords[i].first > chords[i].second) {
-            swap(chords[i].first, chords[i].second);
+    int n;
+    cin >> n;
+    vector<pair<int, int>> v( 2 * n);
+
+    for (int i = 0; i < n; i ++) {
+        int a, b;
+        cin >> a >> b;
+        --a, -- b;
+        if (a > b) {
+            swap(a, b);
         }
+
+        v[a] = {0, i};
+        v[b] = {1, i}; 
     }
 
-    if (hasIntersection(chords)) {
-        cout << "Yes" << endl;
-    } else {
-        cout << "No" << endl;
+
+    stack<int> S;
+
+    for (int i = 0; i < 2*n; i ++) {
+        auto [t, id] = v[i];
+        if (t == 0) {
+            S.push(v[i].second);
+        } else {
+ 
+            if (S.top() != id) {
+                cout << "Yes" << endl;
+                return 0;
+            }
+            S.pop();
+
+        }
     }
+    cout << "No" << endl;
     return 0;
 }
