@@ -37,10 +37,10 @@ int main() {
 
     for (int mask = 1; mask < (1 << N); ++mask) {
         for (int i = 0; i < N; ++i) {
-            //if ((mask & (1 << i))) continue;
+            if ((mask & (1 << i)) == 0) continue;
             for (int j = 0; j < N; ++j) {
                 if (dist[j][i] < INF) {
-                    dp[mask][i] = min(min(dp[mask][i], dp[mask ^ (1 << i)][j] + dist[j][i]), dp[mask][j] + dist[j][i]);
+                    dp[mask][i] = min(dp[mask | (1 << j)][j] , dp[mask][i] + dist[i][j]);
                 }
             }
         }
