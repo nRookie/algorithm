@@ -3,11 +3,11 @@
 #include <cstring>
 using namespace std;
 
-const int N = 1e5 + 10, M = 3 * N + 10;
+const int N = 1e5 + 10, M = 4 * N + 10;
 
 int h[N], e[M], ne[M], idx;
 
-const int MAX = 1e6;
+const int MAX = 1000000;
 void add(int a, int b) {
     e[idx] = b, ne[idx] = h[a], h[a] = idx++;
 }
@@ -17,7 +17,6 @@ int path;
 
 void dfs(int u) {
     if (path >= MAX) return;
-    if (!st[u]) {
         st[u] = true;
         path++;
         for (int i = h[u]; ~i; i = ne[i]) {
@@ -27,7 +26,6 @@ void dfs(int u) {
             }
         }
         st[u] = false; // Reset state for u, to allow revisiting in a different path
-    }
 }
 
 int n, m;
