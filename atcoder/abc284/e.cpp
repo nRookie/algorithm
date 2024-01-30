@@ -1,30 +1,32 @@
-#include<iostream>
-#include<vector>
-#include<cstring>
+#include <iostream>
+#include <vector>
+#include <cstring>
 using namespace std;
-
 
 const int N = 1e5 + 10, M = 3 * N + 10;
 
-int h[N], e[M], w[M], ne[M], idx;
+int h[N], e[M], ne[M], idx;
 
 const int MAX = 1e6;
-void add (int a, int b ) {
-    e[idx] = b, ne[idx] = h[a] , h[a] = idx ++;
+void add(int a, int b) {
+    e[idx] = b, ne[idx] = h[a], h[a] = idx++;
 }
 
-
-int st[N];
+bool st[N]; // Use bool instead of int for state array
 int path;
+
 void dfs(int u) {
     if (path >= MAX) return;
-    if(!st[u]) {
+    if (!st[u]) {
         st[u] = true;
-        path ++;
+        path++;
         for (int i = h[u]; ~i; i = ne[i]) {
             int j = e[i];
-            dfs(j);
+            if (!st[j]) { // Only proceed if the next node hasn't been visited
+                dfs(j);
+            }
         }
+        st[u] = false; // Reset state for u, to allow revisiting in a different path
     }
 }
 
@@ -32,19 +34,20 @@ int n, m;
 int main() {
     cin >> n >> m;
 
-    memset(h, -1 , sizeof h);
+    memset(h, -1, sizeof h);
 
-    while (m --) {
+    while (m--) {
         int a, b;
         cin >> a >> b;
-        add (a, b);
-        add (b, a);
+        add(a, b);
+        add(b, a);
     }
-    for (int i = 1; i <= n; i ++) {
-        if (!st[i]) {
-            dfs(i);
-        }
-    }
-    cout << path << endl;
+
+    // Reset the state array and start DFS from vertex 1
+    memset(st, 0, sizeof st);
+    path = 0;
+    dfs(1);
+
+    cout << min(path, MAX) << endl; // Print the minimum of path and MAX
     return 0;
 }
