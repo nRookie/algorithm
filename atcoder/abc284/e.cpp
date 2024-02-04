@@ -3,7 +3,7 @@
 #include <cstring>
 using namespace std;
 
-const int N = 1e5 + 10, M = 4 * N + 10;
+const int N = 1e6 + 10, M = 4 * N + 10;
 
 int h[N], e[M], ne[M], idx;
 
