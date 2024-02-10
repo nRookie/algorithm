@@ -95,24 +95,11 @@ int main() {
         LL x = balls % (n);
             // add
         if (count) modify(1, 1, n, count);
-        // for (int i = 1; i <= n; ++i) {
-        //     cout << query(1, i, i) << " "; 
-        // }
-        // cout << endl;
-        //cout << "x " << x << " " << b <<  endl;
+        if (!x) continue;
         if (b + x >= n + 1) {
-            if (b + 1 <= n)
-            modify(1, b + 1, n, 1);
-            // for (int i = 1; i <= n; ++i) {
-            //     cout << query(1, i, i) << " "; 
-            // }
-            // cout << endl;
-            if (b + x - n >= 1)
-            modify(1, 1, b + x - n , 1);
-            // for (int i = 1; i <= n; ++i) {
-            //     cout << query(1, i, i) << " "; 
-            // }
-            // cout << endl;
+            if (x == n) modify(1, 1, x, 1);
+            else  modify(1, x + 1, n, 1), modify(1, 1, b + x - n , 1);
+            
         } else {
             modify(1, b + 1, b + x ,1);
 
