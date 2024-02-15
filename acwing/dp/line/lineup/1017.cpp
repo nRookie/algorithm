@@ -1,0 +1,48 @@
+#include<iostream>
+#include<cstring>
+using namespace std;
+
+const int N = 110;
+
+int h[N];
+
+int main() {
+
+    int k;
+
+    cin >> k;
+
+    while (k --) {
+        int n; 
+        cin >> n;
+        
+        for (int i = 1; i <= n; i ++) {
+            cin >> h[i];
+        }
+        int res = 0;
+       
+        int f[N];
+
+        for (int i = 1; i <= n; i ++) {
+            f[i] = 1;
+            for (int j = 1; j < i; j ++) {
+                if (h[j] > h[i]) {
+                    f[i] = max(f[i], f[j] + 1);
+                }
+            }
+            res = max(res, f[i]);
+        }
+        int g[N] = {0};
+        for (int i = n; i >= 1; i --) {
+            g[i] = 1;
+            for (int j = n; j > i; j --) {
+                if (h[j] > h[i]) {
+                    g[i] = max(g[i], g[j] + 1);
+                }
+            }
+            res = max(res, g[i]);
+        }
+
+        cout << res << endl;
+    }
+}
