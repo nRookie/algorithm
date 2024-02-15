@@ -21,23 +21,24 @@ int main() {
     for (int i = 1; i <= n; i ++) {
         f[i] = 1;
         for (int j = 1; j < i; j ++) {
-            if (h[j] > h[i]) {
+            if (h[j] < h[i]) {
                 f[i] = max(f[i], f[j] + 1);
             }
         }
-        res = max(res, f[i]);
     }
     
+    int g[N];
     for (int i = n; i >= 1; i --) {
-        f[i] = 1;
+        g[i] = 1;
         for (int j = n; j > i; j --) {
-            if (h[j] > h[i]) {
-                f[i] = max(f[i], f[j] + 1);
+            if (h[j] < h[i]) {
+                g[i] = max(g[i], g[j] + 1);
             }
         }
-        res = max(res, f[i]);
     }
 
 
+    for (int i = 1; i <= n; i ++)
+        res = max(res, g[i] + f[i] - 1);
     cout << res << endl;
 }
