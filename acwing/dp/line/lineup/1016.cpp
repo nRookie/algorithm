@@ -28,6 +28,7 @@ int main() {
                 f[i] = max(f[i], f[j] + a[i]);
             }
         }
+        res = max(res, f[i]);
     }
     cout << res << endl;
     
