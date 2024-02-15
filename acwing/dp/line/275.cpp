@@ -21,11 +21,11 @@ int main() {
             cin >> g[i][j];
 
 
-    for (int k = 2; k <= n * m; k ++)
+    for (int k = 2; k <= n + m; k ++)
         for (int i1 = 1; i1 <= n; i1 ++)
-            for (int i2 = 1; i2 <= m; i2++) {
+            for (int i2 = 1; i2 <= n; i2++) {
                 int j1 = k - i1, j2 = k - i2;
-                if (j1 <= n && j2 <= n && j1 >= 1 && j2 >= 1) {
+                if (j1 <= m && j2 <= m && j1 >= 1 && j2 >= 1) {
                     int &t = f[k][i1][i2];
 
 
@@ -42,6 +42,6 @@ int main() {
                 }
             }
     
-    cout << f[2 * n][n][n] << endl;
+    cout << f[m + n][n][n] << endl;
     return 0;
 }
