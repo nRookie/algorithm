@@ -3,6 +3,16 @@
 using namespace std;
 
 
+
+const int N = 1e6 + 10, M = 4 * N;
+
+int h[N], ne[M], e[M], w[M], idx;
+
+void add (int a, int b, int c) {
+    e[idx] = b, ne[idx] = h[a], w[idx] = c, h[a] = idx ++;
+}
+
+
 typedef long long ll;
 ll exgcd(ll a, ll b, ll & x, ll&  y) {
     
