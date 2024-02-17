@@ -1,41 +1,43 @@
 #include<iostream>
-
 using namespace std;
 
-
-
-const int N = 1e6 + 10, M = 4 * N;
-
-typedef pair<int,int> PII;
-int h[N], ne[M], e[M], w[M], idx;
-
-void add (int a, int b, int c) {
-    e[idx] = b, ne[idx] = h[a], w[idx] = c, h[a] = idx ++;
-}
-
-
+const int N = 200005, mod = 1000000007;
 typedef long long ll;
-ll exgcd(ll a, ll b, ll & x, ll&  y) {
-    
-        if (b == 0) {
-            x = 1;
-            return a;
-        }
-        ll d = exgcd(b, a % b, y , x);
-        y -= a/b * x;  
-        
-        return d;
+
+ll fact[N], infact[N];
+ll ans;
+
+ll qmi(int a, int k, int p) {
+    ll ans = 1;
+    while(k) {
+        if (k & 1) ans = (ll)ans * a % p;
+        k >>= 1;
+        a = (ll)a * a % p;
+    }
+    return ans;
 }
 
+void init() {
+    fact[0] = infact[0] = 1;
+    for (int i = 1; i < N; i++) {
+        fact[i] = fact[i - 1] * i % mod;
+        infact[i] = infact[i - 1] * qmi(i, mod - 2, mod) % mod;
+    }
+}
 
+ll C(int a, int b) {
+    if (b > a) return 0; // Just in case
+    return fact[a] * infact[a - b] % mod * infact[b] % mod;
+}
 
-
-// N rows and M columns 
-// Let(i, j) , i th row from the top, j th from the left.
-// K of the squres and put a piece on each of them.
-
-
-// i = 1... K - 1, j = i + 1, k   (xi - xj)
 int main() {
+    init();
 
+    int n, m, k;
+    cin >> n >> m >> k;
+    ans = 0; // Initialize ans to 0
+    for (int i = 1; i < n; i++) ans = (ans + (ll)i * (n - i) % mod * m % mod * m) % mod;
+    for (int i = 1; i < m; i++) ans = (ans + (ll)i * (m - i) % mod * n % mod * n) % mod;
+    ans = ans * C(n * m - 2, k - 2) % mod;
+    cout << ans << endl;
 }
