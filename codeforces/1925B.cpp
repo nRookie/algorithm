@@ -4,39 +4,24 @@
 using namespace std;
 
 
-
-const int N = 1e6 + 10, M = 4 * N;
-
-typedef pair<int,int> PII;
-int h[N], ne[M], e[M], w[M], idx;
-
-void add (int a, int b, int c) {
-    e[idx] = b, ne[idx] = h[a], w[idx] = c, h[a] = idx ++;
-}
-
-
-typedef long long ll;
-ll exgcd(ll a, ll b, ll & x, ll&  y) {
-    
-        if (b == 0) {
-            x = 1;
-            return a;
-        }
-        ll d = exgcd(b, a % b, y , x);
-        y -= a/b * x;  
-        
-        return d;
-}
-
-
-
-// a, 
-// 
 void solve() {
     int n,x ;
-    cin >> n >> x;
 
-    
+    cin >> x >> n;
+
+
+    int ans = 1;
+
+    for (int i = 1; i < x/ i; i ++) {
+        if (x % i == 0) {
+            if (n <= x/ i) {
+                ans = max(ans, i);
+            }
+            if (n <= i)  ans = max(ans, x / i);
+        }
+    }
+
+    cout << ans << '\n';
  
 }
 
