@@ -1,9 +1,7 @@
-Sasha
-Anna
-Anna
-Sasha
-Sasha
-Anna
-Anna
-Anna
-Sasha
+2
+0
+1
+3
+5
+7
+0
