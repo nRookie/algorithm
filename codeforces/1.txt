@@ -1,5 +1,6 @@
-5
-1
-9
-50
-210
+i : 1 f[i]: 3 maxx 3
+i : 2 f[i]: 5 maxx 2
+i : 3 f[i]: 9 maxx 4
+i : 4 f[i]: 12 maxx 3
+i : 5 f[i]: 16 maxx 4
+16
