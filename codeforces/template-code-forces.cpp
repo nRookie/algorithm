@@ -5,7 +5,7 @@ using namespace std;
 
 
 
-const int N = 1e6 + 10, M = 4 * N;
+const int N = 2* 1e6 + 10, M = 4 * N;
 
 typedef pair<int,int> PII;
 int h[N], ne[M], e[M], w[M], idx;
