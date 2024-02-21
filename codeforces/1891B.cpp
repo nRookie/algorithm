@@ -20,7 +20,7 @@ void solve() {
     for (int i = 0; i < n; i ++) {
         cin >> a[i];
     }
-    vector<int> x(n, 0 );
+    vector<int> x(q, 0 );
 
 
     for (int i = 0; i < q; i ++) {
