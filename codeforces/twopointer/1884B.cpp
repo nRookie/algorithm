@@ -66,7 +66,7 @@ void solve() {
     for (int i = 1; i <= n; i ++) {
         if (s[i - 1] == '0' ) {
             cout << res << ' ';
-        } else if (s[i - 1] == '1') {
+        } else {
             j = max(j, i);
            while (j < n) {
                 if (s[j] == '0') {
