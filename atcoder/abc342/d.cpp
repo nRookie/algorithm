@@ -13,6 +13,10 @@ map<int, int> factorize(int n) {
         }
     }
     if (n > 1) factors[n]++;
+
+    for (auto & p : factors) {
+         cout << p.first << " " << p.second << endl;
+    }
     return factors;
 }
 
@@ -38,6 +42,14 @@ int main() {
         }
         freq[oddFactors]++;
     }
+    // 3 * 3 * 2
+    // 18
+
+    // 3 * 3* 2 * 2 * 2
+
+    // 72
+
+    // 18 * 7 2
 
     long long count = 0;
  
