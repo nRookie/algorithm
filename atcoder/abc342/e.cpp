@@ -72,7 +72,7 @@ int main() {
             int j = e[i];
             const auto next = j;
             const auto next_time = w[i].get_last_train(time_limit);
-        
+            cout << *next_time << endl;
             if (next_time && ans[next] < *next_time) {
                 pq.emplace(ans[next] = *next_time, next);
             }
