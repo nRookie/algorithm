@@ -23,7 +23,7 @@ struct train {
 train w[M];
 
 
-ll INF = 1e18;
+ll INF = 2e18 + 10;
 
 
 ll getLastTrain(train & t, ll time_limit) {
