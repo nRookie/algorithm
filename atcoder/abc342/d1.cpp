@@ -48,11 +48,11 @@ int main() {
 
     long long count = 0;
     for (auto odds : freq) {
-        int k = odds.second;
+        long long k = odds.second;
         count += k * (k - 1) / 2;
     }
 
-    count += zeros * (long long)(n - zeros) +  (long long )zeros * (zeros - 1) / 2;
+    count += zeros * (long long)(n - zeros) + zeros *  (long long )(zeros - 1) / 2;
 
     cout << count << endl;
 }
