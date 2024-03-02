@@ -32,9 +32,6 @@ ll exgcd(ll a, ll b, ll & x, ll&  y) {
 
 
 // a, 
-// i, j
-// pi pj
-// 5 1 4 2 3
 // 
 void solve() {
     int n;
