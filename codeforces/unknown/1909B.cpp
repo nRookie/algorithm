@@ -38,28 +38,25 @@ ll exgcd(ll a, ll b, ll & x, ll&  y) {
 void solve() {
     int n;
     cin >> n;
-    vector<int> a(n);
+    vector<ll> a(n);
     for (int i = 0; i < n; i ++) {
         cin >> a[i];
     }
 
     ll xi = 2;
-
-    while(true) {
+    int i = 0;
+    while(i <= 57) {
         set<ll> ans;
-
         for (auto x : a) {
             ans.insert(x % xi);
         }
-
         if (ans.size() == 2) {
             cout << xi << endl;
             return;
         }
-
         xi *= 2;
+        i ++;
         ans.clear();
-
     }
 
     // Therefor it is sufficient to try
