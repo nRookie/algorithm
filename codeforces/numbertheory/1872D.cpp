@@ -52,13 +52,14 @@ void solve() {
     cout << range_sum(n - plus + 1, n) - range_sum(1, minus)<< endl;
     // 7 2 3
     // 1 2 3 4 5 6
-    //   2   4   6     red
+    //   2   4   6     red        red but not purple 2
     //     3     6     blue
     //           6     purple
 
     // red - puple
     // blue - purple
     // n + n - 1 + ... n - (R - 1)) 
+    // n + (n - 1) + .. + n - (R - 1)
     // - (1 + 2 + .. + B)
     // 
 }

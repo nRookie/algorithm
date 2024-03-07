@@ -69,7 +69,8 @@ int main() {
     // dp[i] = maximum length ending with the number i
 
     for (int i = 0; i < N; i ++) {
-        dp[i] = query(1, max(A[i] - D, 0ll) + 1, min(A[i] + D, m) + 1) +1;
+        // max(A[i] - D, 0ll) + 1 // this +1 used for 1-based-index adjusting
+        dp[i] = query(1, max(A[i] - D, 0ll) + 1, min(A[i] + D, m) + 1) +1;  // this +1 is used for calculating the length
         modify(1, A[i] + 1, dp[i]);
         ans = max(ans,dp[i]);
     }
