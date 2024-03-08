@@ -22,7 +22,9 @@ void solve() {
     }
     vector<int> x(q, 0 );
 
-
+    // 2 3 4
+    // 2^2 = 4,    4 + 2^1 = 6  6 % 4 != 0
+    // 4 ^ 4
     for (int i = 0; i < q; i ++) {
         cin >> x[i]; 
     }
