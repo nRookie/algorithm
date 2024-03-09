@@ -1,36 +1,46 @@
 #include <iostream>
 #include <vector>
-#include <algorithm>
+#include <string>
+#include <limits>
+
 using namespace std;
 
-const int N = 1e6 + 10, M = 4 * N;
+int main() {
+    string T;
+    cin >> T;
+    int N;
+    cin >> N;
 
-typedef pair<int, int> PII;
-int h[N], ne[M], e[M], w[M], idx;
-
-void add(int a, int b, int c)
-{
-    e[idx] = b, ne[idx] = h[a], w[idx] = c, h[a] = idx++;
-}
-
-typedef long long ll;
-ll exgcd(ll a, ll b, ll &x, ll &y)
-{
-
-    if (b == 0)
-    {
-        x = 1;
-        return a;
+    vector<vector<string>> bags(N);
+    for(int i = 0; i < N; ++i) {
+        int Ai;
+        cin >> Ai;
+        bags[i].resize(Ai);
+        for(int j = 0; j < Ai; ++j) {
+            cin >> bags[i][j];
+        }
     }
-    ll d = exgcd(b, a % b, y, x);
-    y -= a / b * x;
 
-    return d;
-}
+    vector<int> dp(T.length() + 1, numeric_limits<int>::max());
+    dp[0] = 0; 
 
-//
-int main()
-{
-    string s;
-    
+    for(int i = 0; i < N; ++i) {
+        vector<int> new_dp = dp;  
+        for(const string& s : bags[i]) {
+            for(int j = 0; j <= T.length(); ++j) {
+                if(dp[j] != numeric_limits<int>::max() && j + s.length() <= T.length() && T.substr(j, s.length()) == s) {
+                    new_dp[j + s.length()] = min(new_dp[j + s.length()], dp[j] + 1);
+                }
+            }
+        }
+        dp = new_dp; 
+    }
+
+    if(dp[T.length()] != numeric_limits<int>::max()) {
+        cout << dp[T.length()] << endl;
+    } else {
+        cout << "-1" << endl;
+    }
+
+    return 0;
 }
