@@ -31,5 +31,5 @@ ll exgcd(ll a, ll b, ll & x, ll&  y) {
 
 
 int main() {
-
+  
 }
