@@ -51,19 +51,51 @@ void solve() {
         if(fail) break;
         while(true){
             ans.insert(x);
+            cout <<  "x:" <<  x << endl;
             if(x % b) break;
             x /= b;
         }
     }
-    cout << ans.size();
+    cout << ans.size() << endl;
 }
 
+
+void solve1() {
+    int a, b, l;
+
+    cin >> a >> b >> l;
+
+    set <int> ans;
+
+    for (int i = 0; i < 34; i ++) {
+        bool fail = false;
+        int x = l;
+
+        for (int _ = 0; _ < i; _ ++) {
+            if (x % a) {
+                fail = true;
+                break;
+            }
+            x /= a;
+        }
+
+        if (fail) break;
+
+        while (true) {
+            ans.insert(x);
+            if (x % b) break;
+            x /= b;
+        }
+    } 
+
+    cout << ans.size() << endl;
+}
 
 int main() {
     int t;
     cin >> t;
 
     while (t --) {
-        solve();
+        solve1();
     }
 }
