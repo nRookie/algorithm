@@ -1,38 +1,62 @@
-def solve(N, K, balls):
-    # Initialize variables to store the maximum total value and the last color seen
-    max_total_value = 0
-    
-    # Iterate through all possible combinations of K balls to remove
-    for i in range(N - K + 1):
-        # Create a copy of the list of balls to work with
-        remaining_balls = balls[:]
-        
-        # Remove the K balls starting from index i
-        removed = remaining_balls[i:i+K]
-        del remaining_balls[i:i+K]
-        
-        # Check if the remaining balls satisfy the condition of no two adjacent balls having the same color
-        valid = True
-        for j in range(len(remaining_balls) - 1):
-            if remaining_balls[j][0] == remaining_balls[j+1][0]:
-                valid = False
-                break
-        
-        # Calculate the total value of the remaining balls if the condition is satisfied
-        if valid:
-            total_value = sum(val for _, val in remaining_balls)
-            max_total_value = max(max_total_value, total_value)
-    
-    # If no valid arrangement is found, return -1
-    if max_total_value == 0:
-        return -1
-    else:
-        return max_total_value
+#include <iostream>
+#include <vector>
+#include <algorithm>
 
-# Read input
-N, K = map(int, input().split())
-balls = [tuple(map(int, input().split())) for _ in range(N)]
+using namespace std;
 
-# Call the solve function and print the result
-result = solve(N, K, balls)
-print(result)
+#define rep(i, n) for(int i = 0; i < n; ++i)
+
+#define MAX_K 500
+#define INF (long long)2e+18
+
+int main(void){
+    int n,k;
+    long long c,v;
+    long long dp[MAX_K+1][2][2];
+
+    cin>>n>>k;
+    rep(j,k+1)rep(ii,2){dp[j][ii][0]=-1;dp[j][ii][1]=-INF;} 
+    dp[0][0][0]=0,dp[0][0][1]=0;
+
+    rep(i,n){
+        cin>>c>>v;
+
+        for(int j=k;j>=1;j--){
+            if(dp[j][0][0]!=c){
+               dp[j][0][0]=c;
+               dp[j][0][1]+=v;
+            }
+            else{
+               dp[j][0][0]=c;
+               dp[j][0][1]=dp[j][1][1]+v;
+            }
+            dp[j][1][0]=-1;
+            dp[j][1][1]=-INF;
+            rep(kk,2){
+               if(dp[j-1][kk][1]>=dp[j][0][1]){
+                   if(dp[j-1][kk][0]!=dp[j][0][0]){
+                       dp[j][1][0]=dp[j][0][0];
+                       dp[j][1][1]=dp[j][0][1];
+                   }
+                   dp[j][0][0]=dp[j-1][kk][0];
+                   dp[j][0][1]=dp[j-1][kk][1];
+               }
+               else if((dp[j-1][kk][1]>=dp[j][1][1])&&(dp[j-1][kk][0]!=dp[j][0][0])){
+                   dp[j][1][0]=dp[j-1][kk][0];
+                   dp[j][1][1]=dp[j-1][kk][1];
+               }
+            }
+        }
+        if(dp[0][0][0]!=c){
+            dp[0][0][0]=c;
+            dp[0][0][1]+=v;
+        }
+        else{
+            dp[0][0][1]=-INF;
+        }
+    }
+
+    if(dp[k][0][1]<0)cout<<"-1"<<endl;
+    else cout<<dp[k][0][1]<<endl;
+    return 0;
+}
