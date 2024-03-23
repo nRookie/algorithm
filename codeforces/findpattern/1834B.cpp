@@ -34,37 +34,29 @@ ll exgcd(ll a, ll b, ll & x, ll&  y) {
 // a, 
 // 
 void solve() {
-    int l, r;
+    string l, r;
 
     cin >> l >> r;
 
-    vector<int> numl, numr;
+    int n = r.size();
+    int k = r.size() - l.size();
+    l = string(k, '0') + l;
 
-    while(l) {
-        numl.push_back(l % 10);
-        l /= 10;
-    }
-    while (r) {
-        numr.push_back(r % 10);
-        r /= 10;
-    }
-    int k = numr.size() - numl.size();
-    if (numl.size() != numr.size()) {
-        numl.insert(numl.begin(), k, 0);
-    }
-
-    // 1000      1
-    // 1230    0001
+    // 0001 1440
     // 
     long long res = 0;
-    for (int i = 0; i < k; i ++) {
-        res += numr[i];
+    int diff = n - 1;
+    for (int i = 0; i < n; i ++) {
+        if (l[i] != r[i]) {
+            diff = i;
+            break;
+        }
     }
-
-    for (int i = k; i < numr.size(); i ++) {
-        res += numr[i];
-    }
- 
+    // cout << l << endl;
+    // cout << r << endl;
+    // cout << diff << endl;
+    res += r[diff] - l[diff] + 9 * (n - diff - 1);
+    cout << res << endl;
 }
 
 
