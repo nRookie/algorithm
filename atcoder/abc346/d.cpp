@@ -14,7 +14,7 @@ int main() {
     cin >> s;
 
     vector<int> c(n);
-    vector< vector< vector<long long> >> f(n + 1, vector<vector<long long >> (2, vector<long long> (2, LLONG_MAX)));
+    vector< vector< vector<long long> > > f(n + 1, vector<vector<long long > > (2, vector<long long> (2, LLONG_MAX)));
     for (int i = 0; i < n; i ++) cin >> c[i];
 
     if (s[0] == '0') {
