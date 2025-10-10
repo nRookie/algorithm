@@ -242,6 +242,158 @@ Problem: "Find shortest path in graph with 10^5 nodes, 10^6 edges,
 
 ---
 
+## Why "Only Process Recently Changed Nodes" Works
+
+This is the key insight that makes SPFA faster than Bellman-Ford.
+
+### The Core Principle: Relaxation Dependency
+
+**Key insight:** An edge `(u, v)` can only improve `dist[v]` if `dist[u]` was **just improved**.
+
+```
+If dist[u] didn't change, then:
+    dist[v] = min(dist[v], dist[u] + w)
+
+The right side (dist[u] + w) is the SAME as last time we checked!
+So checking again is WASTEFUL - dist[v] won't improve.
+```
+
+### Visual Example
+
+Consider this graph:
+```
+1 --5--> 2 --3--> 3
+ \               /
+  ------10-------
+```
+
+**Bellman-Ford approach (wasteful):**
+```
+Iteration 1:
+  Check edge (1,2): dist[2] = 0 + 5 = 5     ✅ Improved!
+  Check edge (2,3): dist[3] = 5 + 3 = 8     ✅ Improved!
+  Check edge (1,3): dist[3] = min(8, 0+10) = 8
+
+Iteration 2:
+  Check edge (1,2): dist[2] = min(5, 0+5) = 5     ❌ No change (wasteful!)
+  Check edge (2,3): dist[3] = min(8, 5+3) = 8     ❌ No change (wasteful!)
+  Check edge (1,3): dist[3] = min(8, 0+10) = 8    ❌ No change (wasteful!)
+
+... repeats 997 more times checking edges that won't improve! 💀
+```
+
+**SPFA approach (smart):**
+```
+Queue: [1]
+Process 1:
+  Update dist[2] = 5  → add 2 to queue
+  Update dist[3] = 10 → add 3 to queue
+Queue: [2, 3]
+
+Process 2:
+  Update dist[3] = 8  → 3 already in queue, don't re-add
+Queue: [3]
+
+Process 3:
+  No neighbors or no improvements
+Queue: [] → DONE! ✅
+
+Only processed 3 nodes instead of 999 iterations!
+```
+
+### Mathematical Proof
+
+**Claim:** If `dist[u]` didn't change since we last processed node `u`, then all edges from `u` will produce the same results as before.
+
+**Proof:**
+1. Last time we processed `u`, for each neighbor `v`:
+   - We already did: `dist[v] = min(dist[v], dist[u] + w(u,v))`
+
+2. If `dist[u]` hasn't changed:
+   - The value `dist[u] + w(u,v)` is **identical** to before
+   - So `dist[v]` won't improve further
+
+3. Therefore: **No need to check edges from `u` again until `dist[u]` changes!**
+
+### Why Queue Is Perfect for This
+
+The queue tracks exactly which nodes had their distance **recently improved**:
+
+```python
+for v, weight in g[u]:
+    if dist[v] > dist[u] + weight:
+        dist[v] = dist[u] + weight  # dist[v] just changed!
+
+        if not st[v]:
+            q.append(v)  # v's distance changed → check v's neighbors later!
+```
+
+**The cycle:**
+1. Process node `u` (its distance was recently improved)
+2. Check all edges from `u`
+3. If any neighbor `v` improves → add `v` to queue
+4. Later, process `v` and repeat
+5. When queue is empty → no more improvements possible → DONE!
+
+### Comparison Analogy
+
+Think of it like spreading news in a social network:
+
+**Bellman-Ford:**
+```
+Every hour, ask EVERYONE "did you hear the news?"
+Even people who said "no" last hour
+Even people with no connections
+999 times in a row!
+```
+
+**SPFA:**
+```
+Only ask people who JUST heard the news
+They tell their friends
+Friends tell THEIR friends
+Stop when no one has new news to share
+```
+
+### Why Bellman-Ford Can't Use This Optimization
+
+Bellman-Ford's structure doesn't track which nodes improved:
+
+```cpp
+for (int i = 0; i < n - 1; i++) {
+    for (each edge (u, v, w)) {
+        dist[v] = min(dist[v], dist[u] + w);
+        // No tracking of what changed! Must check everything next round.
+    }
+}
+```
+
+To add this optimization → you've reinvented SPFA! 🎉
+
+### The Trade-off
+
+**Why not always use SPFA then?**
+
+Because the queue/tracking adds overhead:
+- Extra memory for queue and `st[]` array
+- Extra logic for queue management
+
+For **very small graphs** (n < 100), Bellman-Ford might be simpler and fast enough.
+
+For **edge-limited problems** ("at most k edges"), Bellman-Ford's structure naturally supports this - SPFA doesn't.
+
+### Summary of Why It Works
+
+**"Only process recently changed nodes" works because:**
+1. ✅ **Correctness:** Unchanged nodes can't improve their neighbors
+2. ✅ **Efficiency:** Skip redundant work
+3. ✅ **Completeness:** Queue ensures all improvements are eventually processed
+4. ✅ **Termination:** Queue empties when no more improvements exist
+
+This is why SPFA is much faster on typical graphs - it does the **same total work** as Bellman-Ford but **skips the redundant checks**! 🚀
+
+---
+
 ## Fun Facts
 
 - SPFA was invented by 段凡丁 (Duan Fanding), a Chinese computer scientist
