@@ -1,0 +1,17 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Kotlin: test LeetCode 88",
+            "type": "process",
+            "command": "bash",
+            "args": ["${workspaceFolder}/leetcode/88_merge_two_arrays/run.sh"],
+            "group": "test",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        }
+    ]
+}
