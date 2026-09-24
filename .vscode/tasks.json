@@ -2,6 +2,48 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Kotlin: test LeetCode 169",
+            "type": "process",
+            "command": "bash",
+            "args": ["${workspaceFolder}/leetcode/169_majority_element/run.sh"],
+            "group": "test",
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "shared" }
+        },
+        {
+            "label": "Kotlin: test LeetCode 80",
+            "type": "process",
+            "command": "bash",
+            "args": ["${workspaceFolder}/leetcode/80_remove_duplicates_from_sorted_array_ii/run.sh"],
+            "group": "test",
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "shared" }
+        },
+        {
+            "label": "Kotlin: test LeetCode 26",
+            "type": "process",
+            "command": "bash",
+            "args": ["${workspaceFolder}/leetcode/26_remove_duplicates_from_sorted_array/run.sh"],
+            "group": "test",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Kotlin: test LeetCode 27",
+            "type": "process",
+            "command": "bash",
+            "args": ["${workspaceFolder}/leetcode/27_remove_element/run.sh"],
+            "group": "test",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
             "label": "Kotlin: test LeetCode 88",
             "type": "process",
             "command": "bash",
