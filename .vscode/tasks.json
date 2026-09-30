@@ -2,6 +2,15 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Kotlin: test LeetCode 189",
+            "type": "process",
+            "command": "bash",
+            "args": ["${workspaceFolder}/leetcode/189_rotate_array/run.sh"],
+            "group": "test",
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "shared" }
+        },
+        {
             "label": "Kotlin: test LeetCode 169",
             "type": "process",
             "command": "bash",
