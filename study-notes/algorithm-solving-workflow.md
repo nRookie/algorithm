@@ -76,6 +76,44 @@ Explain each improvement causally:
 Do not replace this reasoning with a technique name such as “two pointers.”
 Do not force an improvement when the straightforward solution is sufficient.
 
+### When the useful observation is hard to find
+
+Start with the information your correct baseline stores and the work it repeats.
+Use these smaller questions to investigate possible improvements:
+
+| Question | What to look for |
+|---|---|
+| **History:** If different paths reach the same state, do their future possibilities differ? | If not, merge those histories and avoid solving the same future problem repeatedly. Include any history that still affects valid choices in the state. |
+| **Structure:** What shape do the possible states have? | Look for a prefix, interval, ordering, or another pattern. Draw the actual states before choosing a representation. |
+| **Sufficiency:** Can a smaller representation preserve everything future decisions need? | Consider a boundary, count, best value, or another summary. Check whether two situations with the same summary could require different decisions. |
+| **Dependency:** Which input guarantee makes this simplification valid? | Name the exact guarantee, then imagine removing it. Find an example where the proposed summary would lose necessary information. |
+
+For example, in Jump Game:
+
+```text
+Explore jump paths.
+    → Paths reaching the same index have the same future options.
+Track which indices are reachable.
+    → Every shorter jump is allowed, so reachable indices form a prefix.
+Track the prefix's boundary, farthest.
+    → Only reachable indices may extend that boundary.
+```
+
+A reachability array such as `T T T T F F` can be represented by `farthest = 3`.
+The invariant is that every index from `0` through `farthest` is reachable using
+the positions processed so far. An index `i` may extend the boundary only when
+`i <= farthest`; its contribution is `i + nums[i]`.
+
+The word **maximum** is essential here: any shorter jump is also allowed. If
+jumps had to be exactly the given length, reachable positions could have holes.
+For example, with exact jumps in `[2, 3, 0, 0, 0]`, index `2` is reachable but
+index `1` is not. A boundary alone would incorrectly treat index `1` as usable.
+
+This is one route to an optimization, not a requirement for every problem.
+Other improvements may come from reusing calculations, faster lookups, sorting,
+or changing processing order. Keep a smaller state only when you can explain
+why the information removed cannot affect future decisions.
+
 ## 5. Derive the rule and define the state
 
 Ask: **What information do I need to decide the next action?**
