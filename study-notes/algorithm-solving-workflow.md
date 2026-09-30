@@ -256,6 +256,9 @@ Without a skill invocation, use:
 ## Where related material belongs
 
 - This folder: reusable reasoning and study guidance.
+- [Algorithm concepts cheatsheet](algorithm-concepts-cheatsheet.md): reusable
+  facts, their conditions, and common pitfalls. Ask “What can we learn from
+  this?” to record relevant takeaways there after an exercise.
 - Individual problem folders: problem-specific code, traces, and proofs.
 - Skills: instructions for how the assistant should coach.
 
