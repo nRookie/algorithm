@@ -4,6 +4,19 @@ Build the habit of deriving a solution, not merely remembering its code.
 
 **Understand → try → observe → derive → justify → implement → verify.**
 
+Use the same opening questions across problems, not the same algorithm. First
+clarify the output and constraints, work a tiny example, and describe a correct
+baseline. You need not implement brute force when its behavior and cost are
+already clear. Technique recognition suggests a candidate; the problem's
+properties must justify it.
+
+After that common start, adapt the questions: BFS needs a full state, legal
+moves, and a reason distance layers match the objective; DP needs a precise
+subproblem answer, a recurrence, base cases, and a valid dependency order.
+Greedy needs a reason committing to a local choice cannot spoil the result.
+If stuck, identify the missing piece—state, transition, processing order, or
+correctness argument—and investigate it with a small example.
+
 ## Quick rehearsal checklist
 
 Before coding, explain these points in your own words. Leave unknown answers
