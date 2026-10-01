@@ -37,6 +37,8 @@ path exists.
 | DFS with a stack | `addLast`, `removeLast` | Last in, first out |
 | BFS with a queue | `addLast`, `removeFirst` | First in, first out |
 
+`addFirst` with `removeLast` also implements FIFO; use opposite ends for a queue.
+
 With a stack, push right then left to explore left first. With a queue, adding
 right then left processes right first among those newly added neighbors.
 
@@ -120,3 +122,78 @@ require different future decisions? Which input guarantee rules that out?**
 
 Source examples: [Jump Game I](../leetcode/55_jump_game/EXPLANATION.md) and
 [Jump Game III](../leetcode/1306_jump_game_iii/EXPLANATION.md).
+
+## Deriving DP states instead of guessing dimensions
+
+Ask: “If I pause here, what must I know to solve the remaining problem?” Then
+define what answer is stored for that situation. The state identifies a
+subproblem; its value is the Boolean, count, best score, or other result.
+
+**Sufficiency test:** Find two histories your state treats as identical. Could
+they have different future choices or answers? If yes, add the missing
+information. For example, under a jump limit, the same index with one remaining
+jump can fail while two remaining jumps succeed.
+
+Dimensions can also organize easier questions. In unlimited Jump Game III,
+the index alone describes reachability, but its dependencies can cycle. Defining
+`dp[k][i]` as “can reach zero from i with at most k jumps” creates dependencies
+only on k - 1. A position cycle is no longer a cycle among these DP states.
+
+Before coding, write: **state meaning → transitions → base cases → dependency
+order → final answer → number of states and cost per state**. A valid DP
+formulation is not automatically the most efficient algorithm.
+
+## Prove a bound before introducing a budget dimension
+
+When revisiting a state offers identical future choices, remove cycles from
+any successful path. In a graph with n vertices, reachability then has a
+witness using at most n - 1 edges. This bounds a jump-budget DP even when the
+original task has no explicit limit.
+
+This applies to reachability with history-independent moves. Do not assume
+cycles are removable when the goal or rules require counting walks, spending
+an exact number of moves, or changing resources through repeated visits.
+
+“At most k” permits immediate success with zero moves. In Jump Game III,
+`dp[0][i] = (arr[i] == 0)`. Initialize that row before transitions using k - 1.
+
+## Rolling arrays: preserve the layer meaning
+
+If layer k reads only layer k - 1, two arrays suffice. Finish all writes using
+the unchanged previous layer before swapping. This saves space, not necessarily
+time: n layers with n updates each still cost O(n²).
+
+In-place updates may mix old and new layers. For `[0,1,1]`, starting from
+`[true,false,false]`, a left-to-right scan can mark both indices 1 and 2 true.
+It has propagated two jumps in a supposedly one-jump layer.
+
+That breaks the jump-budget meaning, but can still be valid for a different
+goal: repeatedly propagate eventual reachability until no new truths appear.
+Recheck the state definition and correctness whenever the update order changes.
+
+## Replace repeated scans with a queue of changed results
+
+Ask: **“When this answer changes, which other states could be affected?”**
+Store those dependencies so they can be found without rescanning everything.
+
+For a legal move `i → j`, record `predecessors[j].add(i)`. A predecessor list
+stores who can jump TO an index. `j ± arr[j]` only describes where j can jump
+FROM; it cannot recover incoming moves whose lengths depend on other indices.
+
+For Boolean reachability:
+
+1. Seed true states whose success is already known (all zero-valued indices).
+2. Pop a known-true state and mark its still-false predecessors true.
+3. Enqueue each newly true index once; skip already-true predecessors.
+
+False initially means “not established yet.” After exhaustive propagation,
+remaining false states are unreachable. This is multi-source BFS on reversed
+edges and computes which original states can reach any seeded target.
+
+**Why linear here:** Each Boolean changes once, and Jump Game III has at most
+2n edges. Processing each changed state and its dependents therefore costs
+O(n) time and space. A queue alone does not guarantee linear time: if values
+can improve repeatedly, count all changes and repeated edge processing.
+
+Worked derivation, exact trace, and implementation:
+[Jump Game III: DP to reverse BFS](../leetcode/1306_jump_game_iii/dp_to_reverse_bfs/EXPLANATION.md).
