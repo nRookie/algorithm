@@ -79,6 +79,12 @@ Then:
 
 > Which property of this problem could eliminate that cost?
 
+When repeated simulations fail, also ask: **What did this first failure prove
+about other candidates?** Compare a fresh candidate with the resources or
+state the old attempt had at the same point. Discard an interval only after
+proving that its candidates cannot do better. In Gas Station, every station
+reached during a failed attempt would start with no more gas if tried fresh.
+
 Useful properties might include sorted input, repeated subproblems, a limited
 value range, or a quantity that changes predictably.
 
@@ -140,6 +146,12 @@ For each variable, establish:
 Prefer “the next position to write” over “the left pointer.”
 For movement, distinguish source from destination. For modified data,
 distinguish original contents from current contents.
+
+For aggregates, write the exact range and reference point: one element's
+change, a sum measured from index 0, and resources measured from the current
+candidate are different quantities. Keep names and meanings stable. Before
+using an aggregate to accept a candidate, identify whether the task requires
+an endpoint condition or a condition at every intermediate step.
 
 Derive formulas from the desired behavior in the example, then explain why
 the same relationship applies generally. Do not memorize a formula whose
@@ -217,6 +229,12 @@ Then choose tests that challenge your assumptions, where valid for the problem:
 - A transition that wraps, changes direction, or changes branches.
 - Multiple groups, components, or passes when relevant.
 - A case that breaks the convenient pattern of your first example.
+
+Check which special properties your first example has. Gas Station's familiar
+zero-total example hid an incorrect candidate test that failed with a positive
+total. For a rule claiming that every step is feasible, try an early shortage
+followed by a large surplus. Test the proposed acceptance rule against the
+correct baseline before adding another technique or state dimension.
 
 Compare an optimized implementation against your simple baseline on small
 inputs when practical. Recheck time and auxiliary space, including temporary

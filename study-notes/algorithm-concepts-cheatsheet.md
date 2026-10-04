@@ -7,6 +7,109 @@ and traces belong in each problem's `EXPLANATION.md`.
 To add future lessons, ask: **“What can we learn from this? Update the cheatsheet.”**
 Keep the condition behind each rule, not just the rule itself.
 
+## Prefix and suffix arrays: indexes can represent boundaries
+
+For n elements, use n + 1 boundaries numbered 0 through n. Boundary k is
+after the first k elements. Define `prefix[k]` over `[0, k)` and `suffix[k]`
+over `[k, n)`: both use the same cut, looking left and right respectively.
+This is a common convention, not a requirement; always state the ranges.
+
+For products, empty ranges have value 1: `prefix[0] = suffix[n] = 1`.
+For sums, the empty value is 0. These identity values allow the first real
+element to be combined without a special branch.
+
+- Left to right: `prefix[i + 1] = prefix[i] * nums[i]`.
+- Right to left: `suffix[i] = nums[i] * suffix[i + 1]`.
+- Exclude index i: `prefix[i] * suffix[i + 1]`; the two ranges cover every
+  element except i. For `[1,2,3,4]`, excluding index 2 gives `2 * 4 = 8`.
+
+**Pitfall:** This `suffix[i]` includes `nums[i]`. A suffix defined as strictly
+after i instead uses different recurrence and answer indexes. Adding a slot
+does not justify shifting formulas without redefining the stored ranges.
+Products require suitable numeric bounds; division-based removal fails at zero.
+
+### Reuse output and keep only the running aggregate when possible
+
+If each suffix is needed only once in right-to-left order, keep a single
+running product instead of the full suffix array. For Product Except Self,
+store exclusive prefixes in `answers`; at index i, multiply by the current
+suffix **before** extending it with `nums[i]`. Before use, the suffix must
+represent exactly the elements strictly to the right of i. The update order
+preserves that meaning for the next index.
+
+This reduces storage, not the asymptotic time: O(n) time and O(1) auxiliary
+space **excluding output**, but O(n) total additional space including the
+returned array. Reuse is valid only when overwriting a value cannot destroy
+data needed later; storing all aggregates remains useful when later queries
+need arbitrary entries.
+
+Full derivation, original and improved Kotlin implementations, and boundary
+walkthrough: [Product Except Self](../leetcode/238_product_of_array_except_self/EXPLANATION.md).
+
+### Prefix sums answer totals; path feasibility needs intermediate sums
+
+For additive changes, define `pre[k] = sum(change[0 until k])`. Then the
+combined change over `[a, b)` is `pre[b] - pre[a]`. Starting with resource R,
+the remaining amount at boundary b is `R + pre[b] - pre[a]`. When resource
+must never be negative, this must hold at **every intermediate boundary**,
+not only the endpoint. For changes `[2,-3,4]`, the total is 3 but starting
+empty at index 0 fails after the second change. Zero remaining is allowed.
+
+For a circular additive sequence with nonnegative total, starting at a
+smallest prefix boundary among indices `0 until n` makes all rotated partial
+sums nonnegative: before wrapping, subtract that minimum from later prefixes;
+after wrapping, additionally add the nonnegative total. This models Gas
+Station with an empty initial car and unlimited capacity. It does not account
+for capacity limits that discard collected gas.
+
+For a fixed additive sequence whose value must stay at least L, including the
+initial value, let m be the smallest prefix sum including the empty prefix 0.
+The minimum initial value is `L - m`: adding it raises even the lowest prefix
+to L. An equivalent backward requirement is
+`required[i] = max(L, required[i + 1] - change[i])`, with terminal requirement
+L. For 1413, L = 1; Gas Station allows remaining gas 0. Requirements before a
+suffix are different from actual values during a forward simulation.
+
+Both implementations and their connection to Gas Station DP:
+[Minimum Value to Get Positive Step by Step Sum](../leetcode/1413_minimum_value_to_get_positive_step_by_step_sum/EXPLANATION.md).
+
+### A first failed attempt can eliminate a whole interval of starts
+
+With the same additive changes, starting empty at s and first failing after
+processing i rules out every start in `[s, i]`. The original attempt reached
+each such station with nonnegative resources; starting there empty provides
+no more, and identical future changes cannot remove that disadvantage.
+Reset the candidate to `i + 1` and its local sum to 0. Keep a separate total
+without resetting. For Gas Station, the total check also establishes that
+the final candidate completes the wrapped portion; the surviving local sum
+alone establishes only the portion through the array's end.
+
+Full proof and retrospective on the incorrect prefix/suffix predicate:
+[Gas Station](../leetcode/134_gas_station/EXPLANATION.md).
+
+## Combine indexed storage with a value-to-index map
+
+For unique values, a dense ArrayList plus a HashMap from value to index supports
+average O(1) membership and location, with O(1) indexed access. Keep
+`indices[values[i]] == i` between operations. Append and record the old size as
+the new index; after appending, the index is `size - 1`. Appending is amortized
+O(1), because occasional capacity growth copies elements; hash operations have
+average/expected O(1) cost. These are not per-operation worst-case guarantees.
+
+When order is irrelevant, remove a value by replacing its slot with the last
+value, updating the moved value's index, deleting the requested map key, and
+removing the last slot. This avoids shifting. Update the moved value's map
+entry before deleting the requested key so removal of the last element does
+not recreate that key. This technique does not preserve order or stable indices.
+
+Uniform random indices give uniform random values **when each value occupies
+exactly one slot**: each of n members has probability 1/n. Moving members
+between slots preserves this; duplicates would weight values by multiplicity.
+Equal probability does not guarantee equal counts in a small sample.
+
+Derivation, Kotlin collection details, and removal trace:
+[RandomizedSet](../leetcode/380_insert_delete_getrandom_o1/EXPLANATION.md).
+
 ## Graph traversal: DFS and BFS
 
 ### BFS finds the fewest edges; DFS does not guarantee that
@@ -95,6 +198,17 @@ work performed at that state, including neighbor generation.
 
 Include the visited array and pending stack/queue in space complexity. Include
 the runtime call stack for recursion: a depth-n path can require O(n) space.
+
+For an unobstructed m × n grid with only right/down moves, the number of
+complete corner-to-corner paths is `C(m + n - 2, m - 1)`: choose where the
+downward moves occur. Separately scanning each complete path costs
+`O((m + n) × number of paths)`. This does not describe every DFS implementation;
+if it shares prefix work, count its recursive calls instead. Dungeon Game's
+backward DP processes mn states with constant work each, giving Θ(mn) time
+regardless of the dungeon values or number of routes. Path count grows
+exponentially in a square grid's side length, not its total cell count.
+
+Worked comparison: [Dungeon Game learning summary](../leetcode/174_dungeon_game/LEARNING_SUMMARY.md).
 
 ## Iteration, recursion, and DP are different concepts
 
@@ -227,6 +341,30 @@ Before coding, write: **state meaning → transitions → base cases → depende
 order → final answer → number of states and cost per state**. A valid DP
 formulation is not automatically the most efficient algorithm.
 
+### Backward resource requirements with a choice of continuations
+
+For additive resource changes, no upper capacity limit, and acyclic movement,
+store the minimum resource needed before applying the current state's change
+to complete the task. If any one continuation suffices, choose the smallest
+successor requirement, then use
+`required = max(lower bound, smallest next requirement - current change)`.
+Compute successors first; reverse computation does not reverse legal movement.
+
+Dungeon Game requires health at least 1 and chooses between right/down
+successors. Initialize the terminal continuation to 1; invalid outside moves
+must remain unavailable. Its padded implementation sets only the two virtual
+successors of the destination to 1, leaving other outside entries infinite.
+The stored requirement is not health remaining during a forward journey.
+
+Here `min` chooses one sufficient continuation, while `max(lower bound, ...)`
+enforces resource feasibility. This is path optimization by initial resource,
+not shortest path by number of moves: every complete right/down route has
+`m + n - 2` moves. A route's final resource or total change alone does not
+capture its intermediate shortages.
+
+State definition, corrected comments, full table illustration, and proof:
+[Dungeon Game](../leetcode/174_dungeon_game/EXPLANATION.md).
+
 ## Prove a bound before introducing a budget dimension
 
 When revisiting a state offers identical future choices, remove cycles from
@@ -240,6 +378,41 @@ an exact number of moves, or changing resources through repeated visits.
 
 “At most k” permits immediate success with zero moves. In Jump Game III,
 `dp[0][i] = (arr[i] == 0)`. Initialize that row before transitions using k - 1.
+
+## Prove that later updates preserve earlier inequalities
+
+**Rule:** An established inequality `x >= y + c`, with fixed c, survives if
+later updates never decrease x and never change y. This is a sufficient
+condition; check every write that could affect either side. Preserve the
+relationship, not necessarily the exact stored values.
+
+**Candy example:** Let A be dp after the left-to-right scan and B be dp after
+the right-to-left scan. Choose any adjacent pair with
+`ratings[i] > ratings[i - 1]`. The first scan establishes
+`A[i] >= A[i - 1] + 1`. In the second scan:
+
+- `B[i] >= A[i]`, because updates use `maxOf(existing, requirement)`.
+- Index `i - 1` could update only if `ratings[i - 1] > ratings[i]`, which
+  contradicts this pair's ordering. Only its own iteration writes that entry,
+  so `B[i - 1] = A[i - 1]`.
+
+Combining these facts proves preservation for every such pair:
+
+```text
+B[i] >= A[i] >= A[i - 1] + 1 = B[i - 1] + 1
+```
+
+The guard is false because the two strict comparisons are mutually exclusive,
+not because an if statement is missing. `maxOf` alone is insufficient if the
+right-hand side can also increase: `2 >= 1 + 1` would fail if 1 became 2.
+
+**Optimization:** Complementary guarded constraints can sometimes be handled
+in separate directional scans without revisiting previously satisfied ones.
+For Candy, two linear scans replace increasing-rating heap order, reducing
+O(n log n) time to O(n), with O(n) auxiliary space. The proof justifies this
+processing order; it is not a universal rule for skipping DP iterations.
+Preservation establishes feasibility of the earlier constraints. Minimum
+total candies still requires a separate minimality argument.
 
 ## Rolling arrays: preserve the layer meaning
 
