@@ -7,6 +7,29 @@ the derivation, code, and detailed proof; the rule should make sense without the
 For the process of deriving a solution, use
 [the solving workflow](algorithm-solving-workflow.md).
 
+## Reuse exact matches through prefix–suffix overlaps
+
+For contiguous exact string matching, after a mismatch, a candidate starting
+inside the already matched region can survive only if its retained text suffix
+equals a pattern prefix. Because the matched region equals a pattern prefix,
+its proper borders (prefixes also equal to suffixes) identify these overlaps.
+Try the longest border first; borders of that border give the shorter candidates.
+This avoids rescanning text without skipping a possible occurrence.
+
+Define whether the failure table stores a length or a last index. With a last
+matched index `j` and `-1` for no match, the matched length is `j + 1`, the next
+pattern character is at `j + 1`, and fallback is `j = failure[j]` while keeping
+the mismatching text character fixed. For matched `sasas`, retained lengths
+are `5 → 3 → 1 → 0`. An arbitrary substring is not a valid retained overlap.
+
+**Cost:** KMP takes O(n + m) time and O(m) auxiliary space for text length n
+and pattern length m. Fallbacks can retry one text character repeatedly;
+linear time follows because total decreases of matched length are bounded by
+total increases, each charged to an advancing scan step. Monotonic text scanning
+alone is insufficient to establish this bound.
+
+Reference: [String matching and failure tables](../leetcode/28_find_the_index_of_the_first_occurrence_in_a_string/EXPLANATION.md).
+
 ## Define aggregates by ranges, not by ambiguous index names
 
 For n elements, boundaries 0 through n describe cuts between elements. A useful

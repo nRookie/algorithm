@@ -169,3 +169,60 @@ Try explaining these without looking at the code:
 2. Why does the one-row case require special handling?
 3. What row sequence does the code generate for two rows?
 4. Why can a single loop still take quadratic time with immutable strings?
+
+## Your recall answers, polished
+
+### 1. Why can column positions and spaces be discarded?
+
+> “We read the final result row by row and skip empty cells. Column positions
+> only determine the visual spacing, so appending characters directly to each
+> row gives the same result as storing the full zigzag and then reading it.”
+
+Processing the input from left to right preserves the order of characters
+within each row, so appending puts them in the required output order.
+
+### 2. Why does the one-row case require special handling?
+
+> “In our implementation, `step` controls movement between rows. With only
+> one row, `step` would need to be 0, but our loop only handles +1 and -1.
+> Therefore, we handle the one-row case with an early return.”
+
+Without the guard, the first character is appended to row 0, then the top-row
+branch sets `step = 1` and moves to row 1. A second character would access
+`rows[1]`, which is out of bounds. Returning s is correct because one row
+preserves the original character order.
+
+### 3. What row sequence does the code generate for two rows?
+
+Your answer was correct: B goes to row 1, C to row 0, D to row 1, and E to row 0.
+Including the initial A:
+
+```text
+Character: A  B  C  D  E
+Row:       0  1  0  1  0
+
+Row 0: ACE
+Row 1: BD
+Result: ACEBD
+```
+
+Every row is an endpoint when there are two rows, so direction reverses after
+every character.
+
+### 4. Quadratic time — explanation discussed together
+
+You asked what “quadratic time” means; the explanation we discussed was:
+
+Quadratic time, O(n²), means the work grows on the order of the square of the
+input size. Doubling the input can mean roughly four times as much work.
+A single loop can still be quadratic if its iterations perform increasing work.
+
+With immutable strings, `strs[row] += c` creates a new string and copies the
+previous characters. For a row receiving k characters, the successive string
+lengths are 1, 2, ..., k, whose sum is `k(k + 1) / 2 = Θ(k²)`.
+With two rows, each receives roughly n/2 characters, so the total copying
+remains Θ(n²).
+
+Count the work inside each iteration, not just the number of iterations.
+`StringBuilder` avoids copying the entire prefix on every append, giving
+amortized O(1) work per append and O(n) time for this solution overall.
