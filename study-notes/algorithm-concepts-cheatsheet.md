@@ -1,456 +1,366 @@
 # Algorithm concepts cheatsheet
 
-Reusable facts collected from solved problems. For how to derive a solution,
-use [the solving workflow](algorithm-solving-workflow.md). Full implementations
-and traces belong in each problem's `EXPLANATION.md`.
+Transferable rules, organized by concept rather than by exercise. Each entry
+states when a rule applies and why it works. Problem links are references for
+the derivation, code, and detailed proof; the rule should make sense without them.
 
-To add future lessons, ask: **“What can we learn from this? Update the cheatsheet.”**
-Keep the condition behind each rule, not just the rule itself.
+For the process of deriving a solution, use
+[the solving workflow](algorithm-solving-workflow.md).
 
-## Prefix and suffix arrays: indexes can represent boundaries
+## Define aggregates by ranges, not by ambiguous index names
 
-For n elements, use n + 1 boundaries numbered 0 through n. Boundary k is
-after the first k elements. Define `prefix[k]` over `[0, k)` and `suffix[k]`
-over `[k, n)`: both use the same cut, looking left and right respectively.
-This is a common convention, not a requirement; always state the ranges.
+For n elements, boundaries 0 through n describe cuts between elements. A useful
+convention is `prefix[k]` over `[0, k)` and `suffix[k]` over `[k, n)`.
+State these ranges explicitly: an inclusive suffix and an exclusive suffix
+require different formulas.
 
-For products, empty ranges have value 1: `prefix[0] = suffix[n] = 1`.
-For sums, the empty value is 0. These identity values allow the first real
-element to be combined without a special branch.
+Use the operation's identity for an empty range: 0 for sums, 1 for products.
+This makes boundary cases follow the same recurrence as other positions.
+For products, the aggregate excluding index i is
+`prefix[i] * suffix[i + 1]`, because those ranges omit exactly that element.
+For `[1,2,3,4]`, excluding index 2 gives `2 * 4 = 8`.
 
-- Left to right: `prefix[i + 1] = prefix[i] * nums[i]`.
-- Right to left: `suffix[i] = nums[i] * suffix[i + 1]`.
-- Exclude index i: `prefix[i] * suffix[i + 1]`; the two ranges cover every
-  element except i. For `[1,2,3,4]`, excluding index 2 gives `2 * 4 = 8`.
+**Limit:** Numeric overflow still matters. Removing an element by division
+requires assumptions that fail at zero.
 
-**Pitfall:** This `suffix[i]` includes `nums[i]`. A suffix defined as strictly
-after i instead uses different recurrence and answer indexes. Adding a slot
-does not justify shifting formulas without redefining the stored ranges.
-Products require suitable numeric bounds; division-based removal fails at zero.
+Reference: [Product Except Self](../leetcode/238_product_of_array_except_self/EXPLANATION.md).
 
-### Reuse output and keep only the running aggregate when possible
+## Replace stored aggregates with running values when access is sequential
 
-If each suffix is needed only once in right-to-left order, keep a single
-running product instead of the full suffix array. For Product Except Self,
-store exclusive prefixes in `answers`; at index i, multiply by the current
-suffix **before** extending it with `nums[i]`. Before use, the suffix must
-represent exactly the elements strictly to the right of i. The update order
-preserves that meaning for the next index.
+If an aggregate is consumed only once in scan order, it may need only a running
+value. Keep it equal to the range required by the current answer; extend it
+only after using it if the current element must be excluded.
 
-This reduces storage, not the asymptotic time: O(n) time and O(1) auxiliary
-space **excluding output**, but O(n) total additional space including the
-returned array. Reuse is valid only when overwriting a value cannot destroy
-data needed later; storing all aggregates remains useful when later queries
-need arbitrary entries.
+Reuse an output slot only after its old value's final use. This is a dependency
+argument: compression is safe because no future computation needs the erased
+information. Arbitrary later queries may still require the full aggregate array.
 
-Full derivation, original and improved Kotlin implementations, and boundary
-walkthrough: [Product Except Self](../leetcode/238_product_of_array_except_self/EXPLANATION.md).
+**Cost:** This can reduce auxiliary space without changing time complexity.
+O(1) auxiliary space excluding an n-element output still means O(n) total
+additional storage including that output.
 
-### Prefix sums answer totals; path feasibility needs intermediate sums
+Reference: [Product Except Self](../leetcode/238_product_of_array_except_self/EXPLANATION.md).
 
-For additive changes, define `pre[k] = sum(change[0 until k])`. Then the
-combined change over `[a, b)` is `pre[b] - pre[a]`. Starting with resource R,
-the remaining amount at boundary b is `R + pre[b] - pre[a]`. When resource
-must never be negative, this must hold at **every intermediate boundary**,
-not only the endpoint. For changes `[2,-3,4]`, the total is 3 but starting
-empty at index 0 fails after the second change. Zero remaining is allowed.
+## Endpoint totals and intermediate feasibility are different conditions
 
-For a circular additive sequence with nonnegative total, starting at a
-smallest prefix boundary among indices `0 until n` makes all rotated partial
-sums nonnegative: before wrapping, subtract that minimum from later prefixes;
-after wrapping, additionally add the nonnegative total. This models Gas
-Station with an empty initial car and unlimited capacity. It does not account
-for capacity limits that discard collected gas.
+For additive changes, define `pre[k] = sum(change[0 until k])`. The change over
+`[a, b)` is `pre[b] - pre[a]`. Starting with resource R at boundary a leaves
+`R + pre[b] - pre[a]` at boundary b.
 
-For a fixed additive sequence whose value must stay at least L, including the
-initial value, let m be the smallest prefix sum including the empty prefix 0.
-The minimum initial value is `L - m`: adding it raises even the lowest prefix
-to L. An equivalent backward requirement is
-`required[i] = max(L, required[i + 1] - change[i])`, with terminal requirement
-L. For 1413, L = 1; Gas Station allows remaining gas 0. Requirements before a
-suffix are different from actual values during a forward simulation.
+If the resource must stay at least L, check this inequality at every visited
+boundary, not just the destination. For changes `[2,-3,4]`, the final change is
+positive, but starting with 0 violates a lower bound of 0 after the second step.
 
-Both implementations and their connection to Gas Station DP:
-[Minimum Value to Get Positive Step by Step Sum](../leetcode/1413_minimum_value_to_get_positive_step_by_step_sum/EXPLANATION.md).
+For a fixed sequence, let m be the minimum prefix sum, including the empty
+prefix 0. The minimum initial resource is `L - m`: it raises the lowest point
+to L, and any smaller initial amount fails there. This assumes additive changes,
+no capacity limit that discards gains, and the same lower bound initially and
+after every step.
 
-### A first failed attempt can eliminate a whole interval of starts
+Reference: [Minimum Value to Get Positive Step by Step Sum](../leetcode/1413_minimum_value_to_get_positive_step_by_step_sum/EXPLANATION.md).
 
-With the same additive changes, starting empty at s and first failing after
-processing i rules out every start in `[s, i]`. The original attempt reached
-each such station with nonnegative resources; starting there empty provides
-no more, and identical future changes cannot remove that disadvantage.
-Reset the candidate to `i + 1` and its local sum to 0. Keep a separate total
-without resetting. For Gas Station, the total check also establishes that
-the final candidate completes the wrapped portion; the surviving local sum
-alone establishes only the portion through the array's end.
+## A minimum prefix can select a feasible rotation
 
-Full proof and retrospective on the incorrect prefix/suffix predicate:
-[Gas Station](../leetcode/134_gas_station/EXPLANATION.md).
+For a nonempty circular sequence of additive changes with total T >= 0,
+choose a smallest prefix boundary s among `0 until n`.
 
-## Combine indexed storage with a value-to-index map
+- Before wrapping, each partial change is `pre[k] - pre[s] >= 0`.
+- After wrapping, it is `T + pre[k] - pre[s] >= 0`.
 
-For unique values, a dense ArrayList plus a HashMap from value to index supports
-average O(1) membership and location, with O(1) indexed access. Keep
-`indices[values[i]] == i` between operations. Append and record the old size as
-the new index; after appending, the index is `size - 1`. Appending is amortized
-O(1), because occasional capacity growth copies elements; hash operations have
-average/expected O(1) cost. These are not per-operation worst-case guarantees.
+Both inequalities follow from the minimum-prefix choice. Thus the rotation
+starting at s keeps every partial sum nonnegative. Negative total makes every
+rotation impossible when starting empty.
 
-When order is irrelevant, remove a value by replacing its slot with the last
-value, updating the moved value's index, deleting the requested map key, and
-removing the last slot. This avoids shifting. Update the moved value's map
-entry before deleting the requested key so removal of the last element does
-not recreate that key. This technique does not preserve order or stable indices.
+**Condition:** Gains must accumulate without being discarded; a capacity limit
+can invalidate this reasoning. A nonnegative total alone does not make an
+arbitrary starting boundary feasible.
 
-Uniform random indices give uniform random values **when each value occupies
-exactly one slot**: each of n members has probability 1/n. Moving members
-between slots preserves this; duplicates would weight values by multiplicity.
-Equal probability does not guarantee equal counts in a small sample.
+Reference: [Gas Station](../leetcode/134_gas_station/EXPLANATION.md).
 
-Derivation, Kotlin collection details, and removal trace:
-[RandomizedSet](../leetcode/380_insert_delete_getrandom_o1/EXPLANATION.md).
+## Use dominance to eliminate candidates in groups
 
-## Graph traversal: DFS and BFS
+Suppose attempt A first fails after step i. At an earlier boundary k it had
+nonnegative resource. Attempt B starts empty at k and faces the same future
+additive changes, so it has no more resource than A at every later boundary.
+It therefore also fails by i. One failure can rule out an entire interval of
+candidate starts, instead of retrying each one.
 
-### BFS finds the fewest edges; DFS does not guarantee that
+**General rule:** Candidate B can be discarded when another candidate starts
+at least as favorably, faces equivalent future choices, and still cannot succeed.
+The comparison must persist through future transitions; an apparent advantage
+is insufficient if the candidates have different options or resource behavior.
 
-- **Rule:** In an unweighted graph, BFS explores states in increasing distance
-  from the start, measured in number of edges. The first target reached has the
-  minimum number of edges among all reachable targets. Equal positive edge
-  costs also make this a minimum-cost path.
-- **Why:** A FIFO queue processes all states at distance d before states at
-  distance d + 1. DFS follows a branch deeply before trying alternatives.
-- **Example:** In Jump Game III, each legal jump is one edge. BFS can find the
-  minimum number of jumps to any zero. A jump spanning ten array positions
-  still costs one jump. A Boolean-only implementation must add distance
-  tracking to return the count; parent tracking is needed to reconstruct a path.
-- **Limit:** Ordinary BFS does not guarantee minimum total cost when edge
-  costs differ. DFS may find a shortest path by chance, but its first success
-  is not guaranteed to be shortest.
+**Pitfall:** Eliminating earlier candidates proves they fail; it does not alone
+prove the surviving candidate completes the whole task. Prove the remaining
+portion separately, including any wraparound.
 
-### Reachability allows either traversal order
+Reference: [Gas Station](../leetcode/134_gas_station/EXPLANATION.md).
 
-For a finite graph, both DFS and BFS correctly answer whether a target is
-reachable when they explore all relevant moves and handle repeated states.
-Changing the order can change which path is found first, but not whether a
-path exists.
+## Combine data structures through an explicit shared invariant
 
-| Traversal | Kotlin deque operations | Order |
+A dense array and a value-to-index map complement each other: the array gives
+indexed access, and the map gives location by value. For unique values, maintain
+`indices[values[i]] == i` after every operation.
+
+When order and stable indices are unnecessary, deletion can move the last
+element into the deleted slot, repair its map entry, then remove the old key and
+last slot. This avoids shifting. Updating the moved entry before deleting the
+requested key also handles deletion of the last element correctly.
+
+**Cost:** Indexed access is O(1), dynamic-array append is amortized O(1), and
+hash lookup/update is expected O(1), not a per-operation worst-case guarantee.
+
+Uniformly sampling an array index samples values uniformly only if each value
+occupies exactly one slot. Duplicates weight values by multiplicity. Equal
+probabilities do not guarantee equal observed counts in a small sample.
+
+Reference: [RandomizedSet](../leetcode/380_insert_delete_getrandom_o1/EXPLANATION.md).
+
+## Choose traversal order according to the objective
+
+In a finite graph, complete DFS and BFS both answer reachability when repeated
+states are handled correctly. Their order may change the first path found.
+
+BFS also guarantees a path with the fewest edges: FIFO processing finishes
+distance d before distance d + 1. This minimizes total cost when every edge
+has the same positive cost. DFS's first success has no such guarantee;
+ordinary BFS does not guarantee minimum cost with unequal edge costs.
+
+| Order | Deque operations | Meaning |
 | --- | --- | --- |
-| DFS with a stack | `addLast`, `removeLast` | Last in, first out |
-| BFS with a queue | `addLast`, `removeFirst` | First in, first out |
+| Stack | `addLast`, `removeLast` | Last in, first out |
+| Queue | `addLast`, `removeFirst` | First in, first out |
 
-`addFirst` with `removeLast` also implements FIFO; use opposite ends for a queue.
+Two queues can represent current and next BFS layers. Finish one layer before
+advancing distance; order within a layer does not affect equal-cost distances.
+Layer organization alone does not reduce neighbor-generation work.
+Store distances to return a count and parents to reconstruct a path.
 
-Two-queue BFS makes distance layers explicit: finish `current`, collecting new
-states in `next`, then transfer and increment the distance once. Entries need
-no individual distance because a layer shares one value. Reordering within a
-layer is safe for equal-cost shortest distances; mixing layers is not. This
-alone does not reduce neighbor-scanning work. See
-[Jump Game II: two-queue BFS and DP](../leetcode/45_jump_game_ii/two_queue_bfs/EXPLANATION.md).
+References: [Jump Game III](../leetcode/1306_jump_game_iii/EXPLANATION.md),
+[BFS distance layers](../leetcode/45_jump_game_ii/two_queue_bfs/EXPLANATION.md).
 
-With a stack, push right then left to explore left first. With a queue, adding
-right then left processes right first among those newly added neighbors.
+## A visited key must identify equivalent future situations
 
-### Visited prevents cycles and repeated expansion
+Explore a state once only when revisiting it offers no new relevant choices.
+A physical position alone is not a sufficient key if remaining resources,
+move budgets, or history change what can happen next.
 
-If reaching a state again offers the same future choices, explore it once.
-For example, `[1,1]` in Jump Game III permits `0 → 1 → 0 → ...`; visited stops
-this cycle. Recursive DFS must mark before exploring neighbors.
+For basic reachability, permanent visited marks prevent cycles and repeated
+expansion. A repeated visit being skipped does not mean that state's answer
+has been proved false: visited marks and cached subproblem answers have
+different meanings. Path enumeration may require different marking rules.
 
-For basic reachability, keep marks permanently instead of unmarking on return.
-Returning false for a repeated visit means “skip this exploration,” not “this
-state has been proved unable to reach the target.” A visited array is not a
-cache of per-state answers.
+Marking before enqueueing prevents duplicate pending entries. In equal-cost
+BFS, first discovery also fixes the shortest distance and its parent.
+Marking when removing can still work if duplicates are skipped before expansion,
+but pending duplicates must be counted in time and space analysis.
 
-**Condition:** The visited key must represent the full state. If future options
-depend on remaining resources or another part of the history, an index alone
-may be insufficient. Path-enumeration tasks may also need different rules.
+Reference: [Jump Game III](../leetcode/1306_jump_game_iii/EXPLANATION.md).
 
-### Marking when adding versus when removing
+## Count total work, not just states or loop nesting
 
-Marking valid states before adding them to a stack or queue prevents duplicate
-pending entries. In BFS, first discovery gives the shortest distance, so record
-the distance and parent then, without overwriting them on later encounters.
+Time is the sum of work performed over all processed states. Visiting n states
+once can still take O(n²) if each generates O(n) transitions. Adjacency-list
+traversal is O(V + E) because both vertices and edges are counted.
 
-Marking when removing is also correct for the reachability code in Jump Game
-III, provided repeated entries are skipped before expansion. Duplicates can
-be pending simultaneously. Its O(n) bound still holds because each index
-expands once and adds at most two entries.
+Nested loops can be linear when their combined inner iterations visit globally
+disjoint new items. Prove that a boundary only advances or that each item is
+charged a bounded number of times. A visited set may prevent enqueueing without
+preventing repeated checks of overlapping neighbors.
 
-Source example: [Jump Game III](../leetcode/1306_jump_game_iii/EXPLANATION.md).
+For an unobstructed m-by-n grid with right/down moves, complete corner-to-corner
+paths number `C(m + n - 2, m - 1)`. Scanning every complete path separately costs
+O((m + n) times that count). A DFS sharing prefixes requires counting its calls
+instead. A DP with mn states and constant work per state takes Θ(mn), regardless
+of the number of paths. Square-grid path counts grow exponentially in side
+length, not in total cell count.
 
-## Complexity: count transitions as well as states
+Include pending entries, recursion depth, copies, and library operations in
+the analysis; qualify amortized costs. Reducing stored data does not automatically
+reduce computation.
 
-“Each state is visited once” is only part of the time analysis. Also count the
-work performed at that state, including neighbor generation.
+References: [Counting range scans](../leetcode/45_jump_game_ii/dp/EXPLANATION.md),
+[Path enumeration versus DP](../leetcode/174_dungeon_game/LEARNING_SUMMARY.md).
 
-- Graph traversal with adjacency lists takes O(V + E): V vertices and E edges.
-- In Jump Game III, there are n indices and at most 2n edges, so time is O(n).
-  For the saved iterative implementation, at most `1 + 2n` entries are pushed,
-  including invalid and duplicate entries. Deque operations are amortized O(1).
-- In range-marking Jump Game I DP, one index may examine O(n) destinations;
-  processing each index once can therefore still take O(n²) time.
-- In Jump Game II BFS, a visited set prevents duplicate enqueueing but still
-  checks overlapping destination ranges: O(n²) time. Scanning only destinations
-  beyond a monotone discovery boundary makes the total inner-loop work O(n).
-  Nested loops can be linear when each index participates only once globally.
+## Execution style, search order, and DP describe different things
 
-Include the visited array and pending stack/queue in space complexity. Include
-the runtime call stack for recursion: a depth-n path can require O(n) space.
+Iteration and recursion describe how code executes. DFS can use recursive calls
+or an explicit stack; both may require memory proportional to search depth.
 
-For an unobstructed m × n grid with only right/down moves, the number of
-complete corner-to-corner paths is `C(m + n - 2, m - 1)`: choose where the
-downward moves occur. Separately scanning each complete path costs
-`O((m + n) × number of paths)`. This does not describe every DFS implementation;
-if it shares prefix work, count its recursive calls instead. Dungeon Game's
-backward DP processes mn states with constant work each, giving Θ(mn) time
-regardless of the dungeon values or number of routes. Path count grows
-exponentially in a square grid's side length, not its total cell count.
+Dynamic programming stores and reuses subproblem results. It can be recursive
+or iterative. Replacing recursion with loops does not by itself create DP.
+BFS organizes work by distance; DP organizes it around subproblem dependencies.
+These views can overlap, but neither is implied merely by a request to minimize.
 
-Worked comparison: [Dungeon Game learning summary](../leetcode/174_dungeon_game/LEARNING_SUMMARY.md).
+**Pitfalls:** Memoization alone does not resolve cyclic dependencies. Recursive
+short-circuiting, such as `search(a) || search(b)`, allows early success but does
+not prevent cycles or replace visited-state handling.
 
-## Iteration, recursion, and DP are different concepts
+Reference: [BFS and DP comparison](../leetcode/45_jump_game_ii/two_queue_bfs/EXPLANATION.md).
 
-**Iterative** describes execution with loops; **recursive** describes functions
-calling themselves. DFS can use either recursive calls or an explicit stack.
-Both versions can have O(n) space even though the iterative version avoids
-deep JVM call-stack usage. An explicit stack still needs memory.
+## Compress state only when discarded distinctions cannot affect the answer
 
-**Dynamic programming** stores and reuses subproblem results. It can be
-recursive or iterative. Replacing recursive DFS with a loop does not by itself
-turn the solution into DP.
+If a reachable set is guaranteed to be a continuous prefix, one endpoint can
+represent it. Extend it only from a reachable source and never decrease it.
+If exact moves leave holes, the farthest endpoint cannot describe which
+intermediate positions are reachable.
 
-BFS and DP can both describe states and transitions, but organize work for
-different reasons. BFS processes states by increasing number of moves; DP
-combines and reuses subproblem answers in a valid dependency order. They are
-not mutually exclusive labels: some problems admit both views. For example,
-Jump Game II can use BFS distance layers or DP minimum-jump values; see its
-[BFS and DP comparison](../leetcode/45_jump_game_ii/two_queue_bfs/EXPLANATION.md).
-“Minimum” alone does not imply DP or BFS: ordinary BFS needs equal move costs
-for its minimum-cost guarantee, and a DP recurrence needs justified
-dependencies. Memoization alone does not resolve cyclic dependencies.
+The same structure can remove repeated scans: when discoveries are guaranteed
+to form a prefix, examine only positions beyond the discovery boundary. Define
+whether the boundary means discovered or processed; those are different states.
 
-For recursive existence searches, `dfs(left) || dfs(right)` short-circuits:
-a true left result skips the right call and success propagates through callers.
-This improves early stopping but does not replace visited or prevent cycles.
+**Extra condition for optimization values:** Discovering a destination once
+does not generally finalize its best value. Later sources must be unable to
+improve it, for example because sources are processed in nondecreasing optimal
+cost and all outgoing moves add the same cost. Prove that ordering property
+before skipping updates.
 
-## State compression requires a structural guarantee
+Test any summary by asking: can two situations with the same summary have
+different relevant futures? If yes, the compression loses necessary information.
 
-If all reachable positions form a prefix, store its endpoint instead of a
-Boolean for every position. Before extending the boundary, check that the
-position providing the extension is itself reachable.
+References: [Reachable-prefix structure](../leetcode/55_jump_game/EXPLANATION.md),
+[Finalizing new destinations](../leetcode/45_jump_game_ii/dp/EXPLANATION.md),
+[Exact moves with holes](../leetcode/1306_jump_game_iii/EXPLANATION.md).
 
-In Jump Game I, “maximum jump length” allows every shorter jump, making
-reachability a continuous prefix. Its update is:
+## Keep frequencies when individual identity and order are unnecessary
 
-```text
-if current <= farthest:
-    farthest = max(farthest, current + nums[current])
-```
+If only category counts affect the answer, use buckets instead of storing or
+sorting individual items. Each item must enter exactly one category. For n
+items and B buckets, counting and scanning cost O(n + B) time and O(B) space.
+A huge category range can make direct indexing impractical.
 
-Exact jumps can leave holes: for `[2,0,2]` starting at 0, Jump Game III reaches
-index 2 but not index 1. A farthest boundary cannot represent that distinction.
+Threshold queries can justify merging categories: if every query is `value >= h`
+with h <= U, replacing values above U with U preserves those answers. It does
+not preserve exact-value queries, sums, or distinctions among larger values.
+For example, capping at 5 preserves `value >= 4`, but not `value == 100`.
 
-In Jump Game II BFS, discoveries also form a prefix. Here `boundary` means
-all indices `0..boundary` have already been enqueued, not necessarily processed.
-For each current index, enqueue only
-`maxOf(current + 1, boundary + 1)..end`, where
-`end = minOf(current + nums[current], n - 1)`. An empty range adds nothing.
-Then set `boundary = maxOf(boundary, end)`: a shorter current reach must not
-erase earlier discoveries and allow duplicate enqueueing. Equal-cost BFS
-preserves minimum jump counts while this compression skips redundant checks.
-The queue still requires O(n) space.
+Prefix counts answer “at most”; suffix counts answer “at least.” Add counts of
+disjoint buckets to avoid double-counting. Scanning candidate thresholds from
+largest to smallest makes the first passing candidate maximal, provided the
+predicate is tested correctly and every larger candidate was considered.
 
-For Jump Game II's left-to-right DP, the same boundary can finalize each
-destination once. The extra justification is that minimum jump counts are
-nondecreasing with index: shorten the first jump that passes an earlier target
-to land on it. Thus the first source reaching a new destination is no worse
-than later sources. This is specific to these jump rules, not a general
-first-update rule for DP. Disjoint new-destination ranges give at most n − 1
-inner iterations in total; source processing is counted separately. See
-[quadratic to linear DP](../leetcode/45_jump_game_ii/dp/EXPLANATION.md).
+Reference: [Capped buckets and threshold counts](../leetcode/274_h_index/EXPLANATION.md).
 
-Before compressing state, ask: **Could two situations with the same summary
-require different future decisions? Which input guarantee rules that out?**
+## Cancel unequal pairs when one value exceeds all others combined
 
-Source examples: [Jump Game I](../leetcode/55_jump_game/EXPLANATION.md),
-[Jump Game II](../leetcode/45_jump_game_ii/EXPLANATION.md), and
-[Jump Game III](../leetcode/1306_jump_game_iii/EXPLANATION.md).
+A strict majority occurs m times among n items with `m > n - m`. Removing
+two unequal values preserves that majority: removing one majority and one
+other leaves the difference unchanged; removing two others increases it by 2.
+The positive excess therefore cannot disappear, so the majority must survive.
 
-## Buckets: preserve frequencies when individual order is unnecessary
+Boyer–Moore compresses the uncanceled values into a candidate and a balance.
+After every prefix, its items partition into unequal canceled pairs plus
+`balance` copies of the candidate. A match adds a copy; a mismatch cancels
+one; at zero balance the next item starts a new candidate. At the end, the
+surviving candidate must be the guaranteed majority: O(n) time, O(1) space.
 
-When the answer depends on how many items fall into each category, count items
-in buckets instead of preserving their individual order. Define exactly what
-each bucket means, and place each item into one category. This loses original
-positions and order, so it is unsuitable when those details affect the answer.
+**Limits:** The balance is not the candidate's frequency. Zero balance describes
+only the processed prefix. Without a strict-majority guarantee, count the final
+candidate in a second pass and check `occurrences > n / 2`; a unique mode is
+insufficient. For example, `[1,1,2,3]` has a unique mode but no majority.
 
-For n items and B buckets, building a frequency array and scanning it costs
-O(n + B) time and O(B) extra space. A small or provably bounded range makes
-this useful; a huge maximum input value can make direct indexing impractical.
-H-Index avoids that problem by bounding the relevant thresholds, not the input
-values.
+Reference: [Majority Element](../leetcode/169_majority_element/EXPLANATION.md).
 
-### Cap values when all relevant thresholds are bounded
+## Separate the identity of a DP subproblem from its stored answer
 
-If every query asks whether a value is at least h, with h <= B, replacing values
-above B with B preserves the answers. In H-Index, n papers imply h <= n,
-so bucket n can combine all papers with at least n citations. Buckets below n
-count exact citation values, including zero. Each paper enters one bucket.
-This is safe because the answer needs threshold counts, not citation sums or
-the exact ordering of values above n. Capping does not preserve exact-value
-queries: a paper with 100 citations is not a paper with exactly n citations.
+A state identifies a situation; its value stores that situation's answer
+(a Boolean, count, minimum requirement, or best score). Include enough information
+to distinguish histories with different relevant futures.
 
-### Combine exact counts to answer threshold queries
+Adding a remaining-step dimension can turn cyclic position dependencies into
+acyclic state dependencies: layer k reads only layer k - 1. This is a valid
+formulation, not necessarily the most efficient one.
 
-With exact-value buckets, a prefix sum counts values at most a threshold;
-a suffix sum counts values at least a threshold. Disjoint categories allow
-these counts to be added without double-counting. For H-Index's capped final
-bucket, suffix counts remain exact for thresholds 0 through n.
+For finite, history-independent reachability, remove cycles from a successful
+path to obtain a witness of at most V - 1 edges. This can bound a step-budget
+dimension. The argument does not apply to counting walks, requiring exactly k
+moves, or collecting resources through repeated visits. An “at most k” state
+must allow immediate success using zero moves.
 
-Scan buckets downward and add `count[h]` to a running total. After the update,
-the total counts papers with at least h citations; comparing one bucket alone
-would miss papers with higher counts. The first passing h is maximal because
-every larger candidate was checked first. This replaces sorting with O(n)
-counting time and O(n) extra space. It is time-optimal for arbitrary unsorted
-input, not a claim of optimal space.
+Reference: [Budget-layer DP](../leetcode/1306_jump_game_iii/EXPLANATION.md).
 
-Recognition question: **Do I need the items' order, or only their frequencies?
-Can I bound the useful categories, and which distinctions can I safely merge?**
+## Backward requirements can summarize an entire future
 
-Worked derivation, state definitions, Kotlin code, and trace:
-[H-Index: sorting to capped buckets](../leetcode/274_h_index/EXPLANATION.md).
-
-## Deriving DP states instead of guessing dimensions
-
-Ask: “If I pause here, what must I know to solve the remaining problem?” Then
-define what answer is stored for that situation. The state identifies a
-subproblem; its value is the Boolean, count, best score, or other result.
-
-**Sufficiency test:** Find two histories your state treats as identical. Could
-they have different future choices or answers? If yes, add the missing
-information. For example, under a jump limit, the same index with one remaining
-jump can fail while two remaining jumps succeed.
-
-Dimensions can also organize easier questions. In unlimited Jump Game III,
-the index alone describes reachability, but its dependencies can cycle. Defining
-`dp[k][i]` as “can reach zero from i with at most k jumps” creates dependencies
-only on k - 1. A position cycle is no longer a cycle among these DP states.
-
-Before coding, write: **state meaning → transitions → base cases → dependency
-order → final answer → number of states and cost per state**. A valid DP
-formulation is not automatically the most efficient algorithm.
-
-### Backward resource requirements with a choice of continuations
-
-For additive resource changes, no upper capacity limit, and acyclic movement,
-store the minimum resource needed before applying the current state's change
-to complete the task. If any one continuation suffices, choose the smallest
-successor requirement, then use
-`required = max(lower bound, smallest next requirement - current change)`.
-Compute successors first; reverse computation does not reverse legal movement.
-
-Dungeon Game requires health at least 1 and chooses between right/down
-successors. Initialize the terminal continuation to 1; invalid outside moves
-must remain unavailable. Its padded implementation sets only the two virtual
-successors of the destination to 1, leaving other outside entries infinite.
-The stored requirement is not health remaining during a forward journey.
-
-Here `min` chooses one sufficient continuation, while `max(lower bound, ...)`
-enforces resource feasibility. This is path optimization by initial resource,
-not shortest path by number of moves: every complete right/down route has
-`m + n - 2` moves. A route's final resource or total change alone does not
-capture its intermediate shortages.
-
-State definition, corrected comments, full table illustration, and proof:
-[Dungeon Game](../leetcode/174_dungeon_game/EXPLANATION.md).
-
-## Prove a bound before introducing a budget dimension
-
-When revisiting a state offers identical future choices, remove cycles from
-any successful path. In a graph with n vertices, reachability then has a
-witness using at most n - 1 edges. This bounds a jump-budget DP even when the
-original task has no explicit limit.
-
-This applies to reachability with history-independent moves. Do not assume
-cycles are removable when the goal or rules require counting walks, spending
-an exact number of moves, or changing resources through repeated visits.
-
-“At most k” permits immediate success with zero moves. In Jump Game III,
-`dp[0][i] = (arr[i] == 0)`. Initialize that row before transitions using k - 1.
-
-## Prove that later updates preserve earlier inequalities
-
-**Rule:** An established inequality `x >= y + c`, with fixed c, survives if
-later updates never decrease x and never change y. This is a sufficient
-condition; check every write that could affect either side. Preserve the
-relationship, not necessarily the exact stored values.
-
-**Candy example:** Let A be dp after the left-to-right scan and B be dp after
-the right-to-left scan. Choose any adjacent pair with
-`ratings[i] > ratings[i - 1]`. The first scan establishes
-`A[i] >= A[i - 1] + 1`. In the second scan:
-
-- `B[i] >= A[i]`, because updates use `maxOf(existing, requirement)`.
-- Index `i - 1` could update only if `ratings[i - 1] > ratings[i]`, which
-  contradicts this pair's ordering. Only its own iteration writes that entry,
-  so `B[i - 1] = A[i - 1]`.
-
-Combining these facts proves preservation for every such pair:
+With additive resource changes, a fixed lower bound L, no capacity limit, and
+acyclic dependencies, store the minimum resource required **before** the current
+change to complete the remaining task. If any one successor is sufficient,
+let q be the smallest successor requirement. For current change d:
 
 ```text
-B[i] >= A[i] >= A[i - 1] + 1 = B[i - 1] + 1
+required = max(L, q - d)
 ```
 
-The guard is false because the two strict comparisons are mutually exclusive,
-not because an if statement is missing. `maxOf` alone is insufficient if the
-right-hand side can also increase: `2 >= 1 + 1` would fail if 1 became 2.
+Resource R must satisfy both `R >= L` and `R + d >= q`; the formula is the
+smallest R satisfying both. Compute successors first. Reverse computation
+does not reverse the task's legal movement.
 
-**Optimization:** Complementary guarded constraints can sometimes be handled
-in separate directional scans without revisiting previously satisfied ones.
-For Candy, two linear scans replace increasing-rating heap order, reducing
-O(n log n) time to O(n), with O(n) auxiliary space. The proof justifies this
-processing order; it is not a universal rule for skipping DP iterations.
-Preservation establishes feasibility of the earlier constraints. Minimum
-total candies still requires a separate minimality argument.
+Use L as the requirement after the final change when the same bound must still
+hold. Invalid continuations must stay unavailable. The stored requirement is
+not the actual resource remaining during a forward journey.
 
-## Rolling arrays: preserve the layer meaning
+**Distinction:** `min` chooses a continuation; `max` enforces survival. Combining
+them does not mean minimizing path length. Final totals alone cannot represent
+intermediate resource shortages.
 
-If layer k reads only layer k - 1, two arrays suffice. Finish all writes using
-the unchanged previous layer before swapping. This saves space, not necessarily
-time: n layers with n updates each still cost O(n²).
+References: [Resource requirements on a path](../leetcode/1413_minimum_value_to_get_positive_step_by_step_sum/EXPLANATION.md),
+[Resource requirements with route choices](../leetcode/174_dungeon_game/EXPLANATION.md).
 
-In-place updates may mix old and new layers. For `[0,1,1]`, starting from
-`[true,false,false]`, a left-to-right scan can mark both indices 1 and 2 true.
-It has propagated two jumps in a supposedly one-jump layer.
+## Prove that later writes preserve earlier constraints
 
-That breaks the jump-budget meaning, but can still be valid for a different
-goal: repeatedly propagate eventual reachability until no new truths appear.
-Recheck the state definition and correctness whenever the update order changes.
+Suppose `x >= y + c` has been established, with fixed c. A sufficient condition
+for preservation is that later writes only increase x and leave y unchanged:
 
-## Replace repeated scans with a queue of changed results
+```text
+x' >= x >= y + c = y' + c
+```
 
-Ask: **“When this answer changes, which other states could be affected?”**
-Store those dependencies so they can be found without rescanning everything.
+Check every write to both sides. A guard can prove an entry stays unchanged
+when its condition contradicts the ordering assumed by the earlier constraint.
+The contradiction must follow from the actual predicates, not from an absent
+if statement. Preserving a relationship does not require freezing both values.
 
-For a legal move `i → j`, record `predecessors[j].add(i)`. A predecessor list
-stores who can jump TO an index. `j ± arr[j]` only describes where j can jump
-FROM; it cannot recover incoming moves whose lengths depend on other indices.
+**Pitfall:** Increasing values with `max` alone is insufficient if the right
+side can also increase: `2 >= 1 + 1` fails when the 1 becomes 2. The sufficient
+condition above is one proof method, not a necessary condition for every algorithm.
 
-For Boolean reachability:
+**Transferable optimization:** Separate constraint families into dependency-ordered
+passes when each pass establishes its constraints and preserves the others.
+This can remove repeated correction or priority ordering. The gain still needs
+a work count; it is not a universal rule for skipping DP iterations.
+Constraint satisfaction and minimum total cost require separate arguments.
 
-1. Seed true states whose success is already known (all zero-valued indices).
-2. Pop a known-true state and mark its still-false predecessors true.
-3. Enqueue each newly true index once; skip already-true predecessors.
+Reference: [Two directional scans: preservation proof](../leetcode/135_candy/EXPLANATION.md).
 
-False initially means “not established yet.” After exhaustive propagation,
-remaining false states are unreachable. This is multi-source BFS on reversed
-edges and computes which original states can reach any seeded target.
+## Rolling arrays must preserve the meaning of a layer
 
-**Why linear here:** Each Boolean changes once, and Jump Game III has at most
-2n edges. Processing each changed state and its dependents therefore costs
-O(n) time and space. A queue alone does not guarantee linear time: if values
-can improve repeatedly, count all changes and repeated edge processing.
+If layer k reads only layer k - 1, two arrays suffice: keep the previous layer
+unchanged until every new value is computed, then swap. In-place updates can
+read new values and accidentally perform multiple transitions within one layer.
 
-Worked derivation, exact trace, and implementation:
-[Jump Game III: DP to reverse BFS](../leetcode/1306_jump_game_iii/dp_to_reverse_bfs/EXPLANATION.md).
+For a chain A → B → C, starting with only A reachable, an in-place scan might
+mark B and then C in a layer intended to allow only one move. Using the old
+layer reaches B but not C. The same immediate propagation might be appropriate
+for eventual reachability, which is a different state definition.
+
+**Cost:** Keeping two layers reduces space; it does not remove the work of
+computing every layer. Rejustify correctness when changing update order.
+
+Reference: [Layered reachability](../leetcode/1306_jump_game_iii/EXPLANATION.md).
+
+## Process changed answers through their dependents
+
+If a changed answer affects only known dependents, record those dependencies
+and queue the affected work instead of repeatedly scanning every state.
+For an edge `a → b`, record a in `predecessors[b]`: outgoing edges from b
+generally cannot reveal who points to b.
+
+For Boolean reachability, seed known-success states and propagate success to
+their predecessors. Initially false means “not established yet”; after exhaustive
+propagation, remaining false states cannot reach a seed. Each state changes
+from false to true at most once, so processing its incoming edges costs O(V + E).
+
+**Condition:** This bound depends on one-time changes and bounded dependency
+processing. If values improve repeatedly, count every change and repeated edge
+scan; using a queue alone does not guarantee linear time.
+
+Reference: [Reverse dependency propagation](../leetcode/1306_jump_game_iii/dp_to_reverse_bfs/EXPLANATION.md).

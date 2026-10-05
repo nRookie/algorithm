@@ -1,0 +1,4 @@
+interface:
+  display_name: "Algorithm Practice"
+  short_description: "Practice algorithms with hints, traces, and diagrams"
+  default_prompt: "Use $algorithm-practice to review my current solution and explain it with a step-by-step execution diagram."

@@ -532,3 +532,127 @@ Reusable facts are recorded in the
 [concepts cheatsheet](../../study-notes/algorithm-concepts-cheatsheet.md).
 Process reminders are integrated into the
 [solving workflow](../../study-notes/algorithm-solving-workflow.md).
+
+## Follow-up discussion: revisiting the greedy proof (2026-10-04)
+
+You returned to this proof because the earlier explanation was still unclear.
+You said that introducing prefixes seemed to make the original problem more
+complex. Your follow-up questions separated several gaps in understanding:
+
+1. What does “wrapping” mean, and why does it matter for Gas Station?
+2. Why can a failure at `i` eliminate every start from `start` through `i`?
+3. Why can we use a value from a previous failed trip to reason about a fresh
+   start?
+4. Even after eliminating those starts, why does the final candidate actually
+   complete the circle?
+
+After the failed-section explanation below, you said “I see” and asked to
+append it so you could remember that you had revisited these questions. This
+records that discussion; it does not assume the proof is permanently settled.
+
+### Wrapping means continuing at station 0 without resetting the gas
+
+Starting at `s`, the circular order is:
+
+```text
+s → … → n - 1 → 0 → … → s - 1 → back to s
+                ↑ wrapping
+```
+
+Reaching the array's end is only part of the trip when `s > 0`. The gas earned
+before wrapping must also let us complete the earlier stations. Prefix sums
+can express this, but they are not required for the following proof.
+
+### A previous failed trip is evidence, not fuel carried into a new attempt
+
+Suppose an attempt from `start` first fails on the trip leaving station `i`.
+At any intermediate station `j`, it arrived with some gas `C >= 0`, before
+collecting that station's gas. A fresh start at `j` instead begins with zero.
+Both attempts face the same fixed changes from `j` through `i`.
+
+```text
+Previous attempt's calculated balance at i = C + changes from j through i < 0
+Fresh attempt's calculated balance at i    =     changes from j through i
+                                          = previous balance - C < 0
+```
+
+For example, if the previous attempt arrived at `j` with `3` gas and failed
+at `i` with calculated balance `-1`, a fresh attempt's balance through the
+same segment would be `-4`. It fails at `i` or earlier. Negative balances
+describe hypothetical failure calculations; the actual car cannot continue
+past its first unaffordable trip.
+
+Thus every start in `[start, i]` is impossible. `i + 1` is the next candidate
+not yet eliminated, not a candidate already guaranteed to work. The code
+resets `leftOver` to zero when testing it.
+
+### Why the last candidate succeeds when total is nonnegative
+
+The resets partition the array into failed sections followed by one final
+section:
+
+```text
+[failed section A] [failed section B] … [final section]
+                                       ↑ final start
+```
+
+Each failed section, when tested from zero, has nonnegative running balances
+until its last trip. Its final balance is negative; that is what triggered
+the reset. Write its total as `-d`, where `d > 0`.
+
+The final section never triggers a reset, so the candidate can traverse it
+from zero. Let its final accumulated gas be `F`, the loop's final `leftOver`.
+If the failed sections have deficits `d₁, d₂, …`, then:
+
+```text
+total = F - d₁ - d₂ - …
+total >= 0 therefore implies F >= d₁ + d₂ + …
+```
+
+After wrapping, we enter the failed sections with `F` gas. Within each such
+section, every balance relative to its beginning is nonnegative until its
+last trip, where it becomes `-d`. Therefore entering with at least `d` gas
+is enough to survive every trip in that section.
+
+We have enough for all deficits together: after paying the first section's
+deficit, we still have enough for all later sections, and so on. This proves
+every intermediate trip after wrapping is feasible, not just the endpoint.
+
+If there are no failed sections, `start = 0` and the final section itself is
+the whole circle. If every section failed, their negative totals would sum
+to a negative `total`; therefore that cannot happen when `total >= 0`.
+
+### Small example of the whole argument
+
+```text
+station:          0   1 | 2   3 | 4
+gas:              3   1 | 2   1 | 5
+cost:             1   4 | 1   4 | 1
+change:          +2  -3 |+1  -3 |+4
+section totals:     -1 |    -2 |+4
+                                ↑ final start = 4
+```
+
+The scan fails at stations `1` and `3`, leaving `start = 4`, `leftOver = 4`,
+and `total = 1`. The final section provides `4` gas, enough to cover the
+earlier section deficits `1 + 2 = 3`.
+
+| Station whose trip is taken | 4 | 0 | 1 | 2 | 3 |
+| --- | --- | --- | --- | --- | --- |
+| Net change | +4 | +2 | -3 | +1 | -3 |
+| Gas remaining after trip | 4 | 6 | 3 | 4 | 1 |
+
+The trip leaving station `4` wraps to `0`; the trip leaving station `3`
+returns to the starting station `4` and finishes the circle.
+
+### The distinction to recall next time
+
+The elimination argument proves that we do not skip a possible answer.
+The failed-section argument proves that the final candidate completes the
+circle when `total >= 0`. Both are needed. If `total < 0`, no start can work
+because every full circle has that same negative total change.
+
+This comparison relies on fixed additive changes and unlimited capacity:
+carried gas is not discarded. Rehearse the proof by asking: “Why is there
+enough gas at the beginning of each failed section, and why does that also
+cover every trip inside it?”
