@@ -7,6 +7,63 @@ the derivation, code, and detailed proof; the rule should make sense without the
 For the process of deriving a solution, use
 [the solving workflow](algorithm-solving-workflow.md).
 
+## Input access determines what must be retained
+
+An algorithm that needs earlier input or both endpoints cannot directly reuse
+that access on a one-pass stream. Clarify the finite-input boundary, replay
+availability, and storage permissions. Consumed data must be retained when
+future decisions still depend on it; chunk boundaries do not restore access.
+
+Filter information during ingestion only when the contract makes it irrelevant.
+Retaining k relevant items out of n uses O(k) storage, but remains O(n) in the
+worst case when every item matters. Lossless compression does not guarantee
+smaller arbitrary input, and a fixed-size hash can collide, so it cannot alone
+provide an exact substitute for the original data.
+
+Reference: [Stream palindrome interview](../leetcode/125_valid_palindrome/STREAM_INTERVIEW.md).
+
+## Separate processing work, RAM, external storage, and I/O
+
+Waiting for input affects elapsed time separately from the work performed on
+each item. Reading n items and then scanning them once is O(n) processing,
+even when network or disk delays dominate the observed duration.
+
+When external storage is available, block buffering can bound RAM without
+removing the stored data: k fixed-size items can occupy O(k) disk storage while
+being processed with O(B) RAM for block capacity B. A constant number of full
+scans needs O(1 + k/B) block transfers in the ideal block model. Keep files open
+and process many items per read to reduce I/O overhead; device latency, seeks,
+and throughput still affect runtime. No fixed disk-to-RAM speed ratio applies.
+
+Reference: [Disk blocks and endpoint comparison](../leetcode/125_valid_palindrome/STREAM_INTERVIEW.md).
+
+## Preprocess fixed input to serve repeated queries
+
+When many queries share unchanged data, build an index once to avoid repeating
+the same scan. Compare preparation cost, per-query cost, and shared storage;
+preprocessing is not automatically worthwhile for one query or every workload.
+For ordered occurrence queries, scanning positions in increasing order creates
+sorted lists without a separate sort. Reuse the index but reset query-local state.
+
+Reference: [Many-query subsequence checks](../leetcode/392_is_subsequence/EXPLANATION.md).
+
+## Find the first strictly later position and preserve future choices
+
+In a sorted list, binary search can find the first value greater than a threshold:
+with bounds `[left, right)`, discard `mid` and earlier entries when its value is
+`<= threshold`; otherwise move `right` to `mid` to retain that candidate.
+Convergence at the list size means no valid value exists. Distinguish the returned
+list index from its stored value.
+
+For matching an ordered sequence into fixed text, choosing the earliest valid
+occurrence preserves every continuation available after a later occurrence.
+This justifies greedy matching. Require strictly increasing text positions:
+reusing one position cannot match two query characters. This argument assumes
+earlier endpoints offer all the later endpoint's future choices; it is not a
+general rule that every greedy earliest choice is correct.
+
+Reference: [Occurrence lists and greedy matching](../leetcode/392_is_subsequence/EXPLANATION.md).
+
 ## Reuse exact matches through prefix–suffix overlaps
 
 For contiguous exact string matching, after a mismatch, a candidate starting
