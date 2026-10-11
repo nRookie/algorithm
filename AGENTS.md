@@ -6,9 +6,29 @@ Use the repository-owned skills:
   learning summaries, implementation reviews, and study notes.
 - [algorithm-step-by-step](.agents/skills/algorithm-step-by-step/SKILL.md) for
   interactive derivation and dry runs, one small question at a time.
+- [algorithm-recap](.agents/skills/algorithm-recap/SKILL.md) for reorganizing old
+  Markdown memos by dynamic topics and subtopics, converting C++ or Go code to
+  Kotlin collections, and finding related LeetCode exercises.
 
 Read the relevant local `SKILL.md` before applying it. Maintain these skills
 in this repository so their instructions travel with the learning notes.
+
+## Learning mode preferences
+
+- Recap implementations should target the matched LeetCode problem for judging:
+  use its required Kotlin API, indexing, types, and constraints while preserving
+  the original algorithmic idea. Keep original AcWing code as a reference.
+- For a new problem, default to step-by-step coaching: ask one small question
+  at a time and wait for the learner's answer, unless they request another mode.
+- For recap of a previously studied problem, default to a direct review and
+  polished explanation. Review the supplied reasoning and code, correct gaps,
+  and organize the notes without requiring the learner to repeat derivation
+  or answer checkpoint questions.
+- Use step-by-step derivation or interactive dry runs during recap only when
+  the learner explicitly requests them. Clarifying genuinely missing problem
+  details is still allowed; do not turn clarification into a guided quiz.
+
+## Reusable concept notes
 
 When the user asks “what can we learn from this?”, requests reusable takeaways,
 or asks to remember an algorithm concept, update

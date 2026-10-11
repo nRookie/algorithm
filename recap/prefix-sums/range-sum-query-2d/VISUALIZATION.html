@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2D prefix sums — see the overlap</title>
+<style>
+:root {color-scheme:light dark;--bg:light-dark(#f6f7fa,#13171c);--panel:light-dark(#fff,#1d232b);--text:light-dark(#182733,#e4edf5);--muted:light-dark(#526273,#acb9c6);--line:light-dark(#d4dce4,#46515e);--positive:light-dark(#d3eee4,#204f44);--negative:light-dark(#f9d8d6,#713b3b);--twice:light-dark(#ffe6ae,#695225);--selected:light-dark(#224f79,#a4cfff);--onselected:light-dark(#fff,#13283b)}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 system-ui,sans-serif} main{max-width:1080px;margin:auto;padding:28px 24px 48px}h1{font-size:clamp(25px,4vw,36px);line-height:1.2;margin:8px 0 12px}h2{font-size:19px;margin:0 0 12px}p{margin:8px 0 16px}.eyebrow,.muted{color:var(--muted)}.eyebrow{letter-spacing:.08em;font-size:12px;text-transform:uppercase}button,select{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 14px;min-height:44px;cursor:pointer}button[aria-pressed="true"]{background:var(--selected);color:var(--onselected);border-color:var(--selected)}button:disabled{opacity:.4;cursor:default}button:focus-visible,select:focus-visible{outline:3px solid var(--selected);outline-offset:3px}.modes,.controls,.navigation,.legend{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.modes{margin:24px 0 16px}.controls{padding:16px 0 20px;align-items:end}.controls label{display:grid;gap:5px;font-size:14px}.controls select{min-width:80px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}.visuals{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:18px 0}.board{display:grid;gap:5px;max-width:360px;margin:0 auto;grid-template-columns:28px repeat(3,minmax(0,1fr))}.axis{display:flex;justify-content:center;align-items:center;color:var(--muted);font-size:13px}.cell{display:flex;min-height:82px;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);border:1px solid var(--line);border-radius:7px}.cell .value{font-size:26px;font-weight:500;font-variant-numeric:tabular-nums}.cell small{font-size:12px;color:var(--muted)}.cell.pos{background:var(--positive)}.cell.neg{background:var(--negative)}.cell.twice{background:var(--twice)}.cell.target{outline:2px solid var(--selected);outline-offset:-4px}.legend{font-size:13px;margin-top:16px}.swatch{display:inline-block;width:12px;height:12px;margin-right:5px;border:1px solid var(--line)}.pre{border-collapse:separate;border-spacing:5px;width:100%;max-width:360px;margin:auto;text-align:center;table-layout:fixed;font-variant-numeric:tabular-nums}.pre th{color:var(--muted);font-size:13px;font-weight:400}.pre td{background:var(--bg);border:1px solid var(--line);border-radius:6px;height:46px}.pre .used{background:var(--positive);font-weight:600}.pre .destination{outline:2px solid var(--selected);outline-offset:-3px}.pre .pending{color:var(--muted)}.pre .zero{color:var(--muted)}.steptext{min-height:80px}.steptext strong{display:block;font-size:18px;margin-bottom:5px}.formula{padding:16px;background:var(--bg);border-radius:8px;overflow-wrap:anywhere;font-family:ui-monospace,monospace;font-size:15px}.formula span{display:block}.formula .number{font-size:22px;margin-top:8px}.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:22px}.term{padding:12px 8px;text-align:center;font-size:13px;white-space:normal}.term .name{display:block;margin-bottom:8px}.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;max-width:110px;margin:8px auto}.mini span{background:var(--bg);border:1px solid var(--line);padding:3px 0;border-radius:3px;color:var(--text)}.mini span.on{background:var(--positive)}.term.negative .mini span.on{background:var(--negative)}.term .amount{font-family:ui-monospace,monospace}.term[aria-pressed="true"] .mini span{border-color:var(--line)}.navigation{justify-content:space-between;margin:20px 0 0}.explanation{margin-top:24px}.explanation p{margin-bottom:12px}summary{cursor:pointer;font-weight:500}code{overflow-wrap:anywhere}a{color:var(--selected)}[hidden]{display:none!important}@media(max-width:680px){main{padding:20px 14px}.visuals{grid-template-columns:1fr}.panel{padding:16px}.steps{grid-template-columns:repeat(2,minmax(0,1fr))}.steptext{min-height:110px}.controls{gap:8px}.controls label{flex:1;min-width:100px}.navigation{gap:8px}.cell{min-height:76px}}@media(prefers-reduced-motion:no-preference){.cell{transition:background-color .2s}}
+</style>
+</head>
+<body>
+<main>
+<div class="eyebrow">Algorithm recap · LeetCode 304</div>
+<h1>2D prefix sums: see the overlap</h1>
+<p>Your boundary idea now applies to both rows and columns. <strong>pre[r][c] covers the first r rows and first c columns.</strong></p>
+<div class="modes" role="group" aria-label="Explanation mode">
+<button id="query" aria-pressed="true">Query a rectangle</button><button id="build" aria-pressed="false">Build a prefix</button>
+</div>
+<div id="query-controls" class="controls">
+<label>Top row · row1<select id="x1" aria-label="Top row"></select></label>
+<label>Left column · col1<select id="y1" aria-label="Left column"></select></label>
+<label>Bottom row · row2<select id="x2" aria-label="Bottom row"></select></label>
+<label>Right column · col2<select id="y2" aria-label="Right column"></select></label>
+</div>
+<div id="build-controls" class="controls" hidden>
+<label>Row boundary · i<select id="i" aria-label="Prefix row boundary"></select></label>
+<label>Column boundary · j<select id="j" aria-label="Prefix column boundary"></select></label>
+</div>
+<p id="selection" class="muted"></p>
+<section class="panel" aria-label="Interactive inclusion-exclusion diagram">
+<div id="steptext" class="steptext" aria-live="polite"></div>
+<div class="visuals">
+<div><h2>How often each cell is counted</h2><div id="matrix" class="board" role="img"></div>
+<div class="legend"><span><i class="swatch" style="background:var(--positive)"></i>×1 included</span><span><i class="swatch" style="background:var(--twice)"></i>×2 double-counted</span><span><i class="swatch" style="background:var(--negative)"></i>×−1 over-subtracted</span><span>×0 canceled / outside</span></div></div>
+<div><h2>Prefix table · boundary indexes</h2><table id="prefix" class="pre" aria-label="Prefix sums indexed by row and column boundaries"></table><p id="table-note" class="muted"></p></div>
+</div>
+<div id="formula" class="formula" aria-live="polite"></div>
+<div id="steps" class="steps" role="group" aria-label="Choose cumulative step"></div>
+<div class="navigation"><button id="previous">← Previous</button><span id="progress" class="muted"></span><button id="next">Next →</button></div>
+</section>
+<section class="explanation">
+<h2>The two corrections</h2>
+<p><strong>Construction:</strong> above + left count their shared corner twice. Subtract that corner once, then include the new cell.</p>
+<p><strong>Query:</strong> removing the top and left regions removes their shared corner twice. Add it back once. The corner's net count becomes zero.</p>
+<details><summary>Connect this to Kotlin and your boundary model</summary>
+<p>Matrix positions are zero-based, matching LeetCode. A query from (row1, col1) through (row2, col2) uses row boundaries row1 and row2 + 1, and column boundaries col1 and col2 + 1.</p>
+<p><code>pre[row2+1][col2+1] − pre[row1][col2+1] − pre[row2+1][col1] + pre[row1][col1]</code></p>
+<p>The original AcWing program used one-based cell positions. This view and the saved Kotlin implementation use LeetCode's interface; the geometric reasoning is identical.</p>
+<p>Boundary zero represents an empty height or width, so the first prefix row and column are all zero. Allocate independent Kotlin rows with <code>MutableList(n + 1) { MutableList(m + 1) { 0 } }</code>.</p>
+<p>Preprocessing: O(nm) time and space. Each query: O(1). The matrix stays unchanged.</p>
+</details>
+<p><a href="EXPLANATION.md">Full recap notes</a> · <a href="Solution.kt">Kotlin implementation</a></p>
+</section>
+</main>
+<script>
+(() => {
+'use strict';
+const a=[[1,2,3],[4,5,6],[7,8,9]];
+const pre=Array.from({length:4},()=>Array(4).fill(0));
+for(let r=1;r<=3;r++) for(let c=1;c<=3;c++) pre[r][c]=pre[r-1][c]+pre[r][c-1]-pre[r-1][c-1]+a[r-1][c-1];
+const state={mode:'query',step:4,x1:1,y1:1,x2:2,y2:2,i:2,j:2};
+const $=id=>document.getElementById(id);
+for(const key of ['x1','y1','x2','y2','i','j']) {
+  $(key).innerHTML=(key==='i'||key==='j'?[1,2,3]:[0,1,2]).map(v=>`<option value="${v}">${v}</option>`).join('');
+  $(key).value=state[key];
+  $(key).addEventListener('change',()=>{
+    state[key]=Number($(key).value);
+    if(key==='x1'&&state.x1>state.x2)state.x2=state.x1;
+    if(key==='x2'&&state.x2<state.x1)state.x1=state.x2;
+    if(key==='y1'&&state.y1>state.y2)state.y2=state.y1;
+    if(key==='y2'&&state.y2<state.y1)state.y1=state.y2;
+    render();
+  });
+}
+const rect=(r,c)=> (row,col)=>row<r&&col<c;
+function terms(s) {
+  const make=(name,sign,r,c)=>({name,sign,r,c,value:pre[r][c],label:`pre[${r}][${c}]`,mask:rect(r,c)});
+  if(s.mode==='query')return [make('Whole prefix',1,s.x2+1,s.y2+1),make('Remove top',-1,s.x1,s.y2+1),make('Remove left',-1,s.x2+1,s.y1),make('Restore overlap',1,s.x1,s.y1)];
+  return [make('Prefix above',1,s.i-1,s.j),make('Prefix left',1,s.i,s.j-1),make('Remove overlap',-1,s.i-1,s.j-1),{name:'Add current cell',sign:1,value:a[s.i-1][s.j-1],label:`matrix[${s.i-1}][${s.j-1}]`,mask:(r,c)=>r===s.i-1&&c===s.j-1}];
+}
+function coefficient(ts,step,r,c){return ts.slice(0,step).reduce((sum,t)=>sum+(t.mask(r,c)?t.sign:0),0);}
+function render(){
+  const s=state,ts=terms(s),isQuery=s.mode==='query';
+  for(const key of ['x1','y1','x2','y2','i','j'])$(key).value=s[key];
+  $('query').setAttribute('aria-pressed',String(isQuery));$('build').setAttribute('aria-pressed',String(!isQuery));
+  $('query-controls').hidden=!isQuery;$('build-controls').hidden=isQuery;
+  $('selection').textContent=isQuery?`Selected cells: rows ${s.x1}–${s.x2}, columns ${s.y1}–${s.y2} (zero-based, inclusive). The outlined cells are your target.`:`Build pre[${s.i}][${s.j}]: first ${s.i} rows × first ${s.j} columns. The outlined cells are this prefix's target.`;
+  const descriptions=isQuery?[
+    'Start with every cell up to the bottom-right corner. Some included cells may be outside your target.',
+    'Subtract everything above the target. Those cells now have a net count of zero.',
+    'Subtract everything left of the target. The shared top-left corner now has count −1: it was removed twice.',
+    'Restore the shared corner once. Every target cell has count 1; every other cell has count 0.'
+  ]:[
+    'The upper prefix covers all earlier rows through the selected column boundary.',
+    'Add the left prefix. Cells shared by the upper and left rectangles now have count 2.',
+    'Subtract their intersection once. The covered cells now have count 1; the new bottom-right cell is still missing.',
+    'Include the new cell. Every cell in the requested prefix rectangle is counted exactly once.'
+  ];
+  $('steptext').innerHTML=`<strong>${s.step}. ${ts[s.step-1].name}</strong><span>${descriptions[s.step-1]}</span>`;
+  let board='<div></div>'+[0,1,2].map(c=>`<div class="axis">col ${c}</div>`).join('');
+  let accessible=[];
+  for(let r=0;r<3;r++){
+    board+=`<div class="axis">${r}</div>`;
+    for(let c=0;c<3;c++){
+      const k=coefficient(ts,s.step,r,c);
+      const target=isQuery?r>=s.x1&&r<=s.x2&&c>=s.y1&&c<=s.y2:r<s.i&&c<s.j;
+      const cls=k===1?'pos':k===2?'twice':k===-1?'neg':'';
+      board+=`<div class="cell ${cls} ${target?'target':''}"><span class="value">${a[r][c]}</span><small>×${k<0?'−1':k}</small></div>`;
+      accessible.push(`row ${r} column ${c}: value ${a[r][c]}, counted ${k} times`);
+    }
+  }
+  $('matrix').innerHTML=board;$('matrix').setAttribute('aria-label',accessible.join('; '));
+  let table='<thead><tr><th scope="col">r / c</th>'+[0,1,2,3].map(c=>`<th scope="col">${c}</th>`).join('')+'</tr></thead><tbody>';
+  for(let r=0;r<=3;r++){
+    table+=`<tr><th scope="row">${r}</th>`;
+    for(let c=0;c<=3;c++){
+      const used=ts.slice(0,s.step).some(t=>t.r===r&&t.c===c);
+      const destination=!isQuery&&r===s.i&&c===s.j;
+      const pending=!isQuery&&r>0&&c>0&&(r>s.i||(r===s.i&&c>s.j)||(destination&&s.step<4));
+      table+=`<td class="${used?'used ':''}${destination?'destination ':''}${pending?'pending ':''}${r===0||c===0?'zero':''}">${pending?'·':pre[r][c]}</td>`;
+    }
+    table+='</tr>';
+  }
+  $('prefix').innerHTML=table+'</tbody>';
+  $('table-note').textContent=isQuery?'Highlighted entries are the prefixes used so far. Boundary 0 gives an empty rectangle.':'Row-major construction: dots are entries not computed yet. The outlined entry is the destination.';
+  const active=ts.slice(0,s.step),total=active.reduce((sum,t)=>sum+t.sign*t.value,0);
+  const expression=active.map((t,k)=>`${k===0?'':t.sign>0?' + ':' − '}${t.label}`).join('');
+  const arithmetic=active.map((t,k)=>`${k===0?'':t.sign>0?' + ':' − '}${t.value}`).join('');
+  $('formula').innerHTML=`<span>${expression}</span><span class="number">${arithmetic} = ${total}</span><span>${s.step===4?(isQuery?'Rectangle sum':'Completed prefix'):'Running total — intermediate state'}</span>`;
+  $('steps').innerHTML=ts.map((t,index)=>{
+    let mini='';for(let r=0;r<3;r++)for(let c=0;c<3;c++)mini+=`<span class="${t.mask(r,c)?'on':''}">${a[r][c]}</span>`;
+    return `<button class="term ${t.sign<0?'negative':''}" data-step="${index+1}" aria-pressed="${s.step===index+1}" aria-label="Show cumulative step ${index+1}: ${t.name}"><span class="name">${index+1}. ${t.name}</span><div class="mini" aria-hidden="true">${mini}</div><span class="amount">${t.sign>0?'+':'−'}${t.value}</span></button>`;
+  }).join('');
+  $('previous').disabled=s.step===1;$('next').disabled=s.step===4;$('progress').textContent=`Step ${s.step} of 4 · click any region below its label to jump`;
+}
+for(const mode of ['query','build'])$(mode).addEventListener('click',()=>{state.mode=mode;state.step=4;render();});
+$('previous').addEventListener('click',()=>{state.step=Math.max(1,state.step-1);render();});
+$('next').addEventListener('click',()=>{state.step=Math.min(4,state.step+1);render();});
+$('steps').addEventListener('click',event=>{const button=event.target.closest('[data-step]');if(button){state.step=Number(button.dataset.step);render();}});
+// Exhaustively check the arithmetic and spatial masks for every selectable target.
+for(let x1=0;x1<3;x1++)for(let x2=x1;x2<3;x2++)for(let y1=0;y1<3;y1++)for(let y2=y1;y2<3;y2++){
+ const ts=terms({mode:'query',x1,x2,y1,y2});let direct=0;
+ for(let r=0;r<3;r++)for(let c=0;c<3;c++){const expected=Number(r>=x1&&r<=x2&&c>=y1&&c<=y2);if(coefficient(ts,4,r,c)!==expected)throw Error('Query mask mismatch');direct+=expected*a[r][c];}
+ if(ts.reduce((sum,t)=>sum+t.sign*t.value,0)!==direct)throw Error('Query arithmetic mismatch');
+}
+for(let i=1;i<=3;i++)for(let j=1;j<=3;j++){
+ const ts=terms({mode:'build',i,j});
+ for(let r=0;r<3;r++)for(let c=0;c<3;c++)if(coefficient(ts,4,r,c)!==Number(r<i&&c<j))throw Error('Build mask mismatch');
+ if(ts.reduce((sum,t)=>sum+t.sign*t.value,0)!==pre[i][j])throw Error('Build arithmetic mismatch');
+}
+render();
+})();
+</script>
+</body>
+</html>
