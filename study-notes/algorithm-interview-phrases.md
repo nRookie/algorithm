@@ -5,6 +5,9 @@ meanings and reasons matter more than formal vocabulary. Both “iterate through
 the array” and “loop through the array” are natural; “traverse the array” is
 also correct. Always distinguish an index from the value stored there.
 
+For binary-search reasoning, common explanation mistakes, and the lessons
+across our exercises, see [Binary search cheatsheet](binary-search-cheatsheet.md).
+
 ## Describe the goal and approach
 
 | Purpose | Natural phrasing |
@@ -35,6 +38,57 @@ also correct. Always distinguish an index from the value stored there.
 If x is a value in `for (x in citations)`, do not call it an index. In an
 index-based loop, “the element at index i” is clearer than “the ith element,”
 which may leave zero-based versus one-based numbering ambiguous.
+
+## Prepositions for positions, ranges, and updates
+
+Use **in** for membership and **at** for a specific position: “The element
+at index i is in the array.” Distinguish index i from the value `nums[i]`.
+
+| Word or phrase | Typical use | Natural example |
+| --- | --- | --- |
+| in | Membership in a collection or range | “The target is in the array.” |
+| at | An exact position | “The value at index mid qualifies.” |
+| before | Strictly earlier positions | “Every element before l is smaller than the target.” |
+| after | Strictly later positions | “Every element after r is larger than the target.” |
+| at or before | Include the named position | “All elements at or before mid are too small.” |
+| at or after | Include the named position | “All elements at or after mid qualify.” |
+| through | Up to and including an endpoint | “Discard everything through mid.” |
+| from … to … | Direction or range | “Scan from left to right.” |
+| within | Inside a specified region | “Search within the selected row.” |
+| over | Traversal or search domain | “Iterate over the elements.” |
+| with | Comparison counterpart | “Compare nums[mid] with the target.” |
+| by | Method or amount of change | “Shrink the interval by moving r.” |
+| to | Assignment destination | “Set l to mid + 1.” |
+| between … and … | Two limits; clarify inclusion | “The answer lies between l and r, inclusive.” |
+
+For numeric ranges, say “from a to b, inclusive” or “from a up to but not
+including b” when endpoint membership matters. `[a, b]` includes both;
+`[a, b)` excludes b. “Before l” excludes index l; “at or before l” includes
+it. These are clearer than “on the left side of l.”
+
+## Describe binary-search boundaries
+
+| Purpose | Natural phrasing |
+| --- | --- |
+| State the first partition | “Values before the boundary are smaller than the target; values at or after it are greater than or equal to the target.” |
+| State the last partition | “Values through the last qualifying index are less than or equal to the target; values after it are greater.” |
+| Retain a candidate | “The middle index could be the answer, so I keep it.” |
+| Discard a prefix | “Everything through mid is too small, so I set l to mid + 1.” |
+| Discard a suffix | “Everything from mid onward is too large, so I set r to mid - 1.” |
+| Justify the upper midpoint | “Since I keep mid when moving l, I use an upper midpoint to guarantee progress.” |
+| State convergence | “The loop ends when the pointers meet.” |
+| Distinguish convergence from success | “The remaining candidate must still be checked for equality.” |
+
+For a sorted array, smaller values come first. Describe the second partition
+as “values less than or equal to the target, followed by values greater than
+the target.” Avoid reversing those portions.
+
+> “I first find the first value greater than or equal to the target and
+> verify that it equals the target. Then I find the last value less than
+> or equal to the target. Because the target exists and the array is sorted,
+> these are its first and last occurrences.”
+
+Reference: [Find First and Last Position](../leetcode/34_find_first_and_last_position_of_element_in_sorted_array/EXPLANATION.md).
 
 ## Explain correctness and control flow
 

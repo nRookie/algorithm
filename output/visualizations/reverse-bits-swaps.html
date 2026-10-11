@@ -1,0 +1,203 @@
+<div id="reverse-bits-swaps">
+  <h3>Reverse 32 bits</h3>
+  <div class="viz-row text-small"><span>Original input</span><code>43261596</code><span>•</span><span>Bit labels track their original positions.</span></div>
+  <div class="viz-controls rb-controls">
+    <button type="button" class="btn" data-prev>Previous</button>
+    <button type="button" class="btn btn-primary" data-next>Next</button>
+    <span data-stage class="tabular-nums" aria-live="polite"></span>
+    <label class="form-label">Follow original bit
+      <select class="form-select" data-follow aria-label="Follow a bit by its original position"></select>
+    </label>
+  </div>
+  <div class="viz-row text-small rb-legend">
+    <span><span class="rb-swatch rb-higher"></span>Higher groups → right</span>
+    <span><span class="rb-swatch rb-lower"></span>Lower groups → left</span>
+  </div>
+  <div data-diagram></div>
+  <div data-detail class="text-small tabular-nums" aria-live="polite"></div>
+  <div class="viz-row text-small rb-footer"><span data-blocks></span><span>•</span><span>Lower-group mask</span><code data-mask></code></div>
+</div>
+<style>
+  #reverse-bits-swaps { width: 100%; color: var(--foreground); }
+  #reverse-bits-swaps .rb-controls { margin-top: 12px; }
+  #reverse-bits-swaps .rb-legend { margin-top: 10px; }
+  #reverse-bits-swaps .rb-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+  #reverse-bits-swaps .rb-swatch { width: 12px; height: 12px; display: inline-block; }
+  #reverse-bits-swaps .rb-higher { background: var(--viz-series-1); }
+  #reverse-bits-swaps .rb-lower { background: var(--viz-series-2); }
+  #reverse-bits-swaps .rb-footer { margin-top: 10px; }
+  #reverse-bits-swaps .rb-diagram { display: block; width: 100%; overflow: visible; }
+  #reverse-bits-swaps .rb-diagram text { font-size: 12px; fill: var(--foreground); }
+  #reverse-bits-swaps .rb-diagram .rb-node { transition: transform 420ms ease; }
+  #reverse-bits-swaps .rb-diagram .rb-wire { fill: none; stroke: var(--border); stroke-width: 1; opacity: 0.4; }
+  #reverse-bits-swaps .rb-diagram .rb-follow-wire { fill: none; stroke-width: 2; }
+  @media (prefers-reduced-motion: reduce) {
+    #reverse-bits-swaps .rb-diagram .rb-node { transition: none; }
+  }
+</style>
+<script>
+(() => {
+  const root = document.getElementById('reverse-bits-swaps');
+  const host = root.querySelector('[data-diagram]');
+  const prev = root.querySelector('[data-prev]');
+  const next = root.querySelector('[data-next]');
+  const follow = root.querySelector('[data-follow]');
+  const ns = 'http://www.w3.org/2000/svg';
+  const n = 43261596;
+  const sizes = [1, 2, 4, 8, 16];
+  const masks = ['0x55555555', '0x33333333', '0x0F0F0F0F', '0x00FF00FF', '0x0000FFFF'];
+  const states = [Array.from({length: 32}, (_, i) => 31 - i)];
+  for (const size of sizes) {
+    const before = states[states.length - 1];
+    states.push(before.map((_, i) => before[i ^ size]));
+  }
+  let stage = 0;
+  let selected = 31;
+  let lastWidth = 0;
+  let svg, nodes, wires, selectedWire;
+
+  function element(tag, attrs = {}, parent) {
+    const node = document.createElementNS(ns, tag);
+    for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, String(value));
+    if (parent) parent.appendChild(node);
+    return node;
+  }
+  function text(label, attrs, parent) {
+    const node = element('text', attrs, parent);
+    node.textContent = label;
+    return node;
+  }
+  function value(order) {
+    let result = 0;
+    for (const origin of order) result = (result << 1) | ((n >>> origin) & 1);
+    return result;
+  }
+  for (let i = 31; i >= 0; i--) {
+    const option = document.createElement('option');
+    option.value = String(i);
+    option.textContent = 'Bit ' + i + ' · ' + ((n >>> i) & 1);
+    follow.appendChild(option);
+  }
+  follow.value = String(selected);
+
+  function draw(rebuild = false) {
+    const width = Math.max(280, Math.round(host.getBoundingClientRect().width));
+    const cols = width >= 640 ? 16 : 8;
+    const rows = 32 / cols;
+    const cell = (width - 24) / cols;
+    const rowHeight = 58;
+    const top = 40;
+    const bottomTitle = top + rows * rowHeight + 54;
+    const bottom = bottomTitle + 20;
+    const height = bottom + rows * rowHeight + 2;
+    const size = sizes[stage];
+    const before = states[stage];
+    const after = states[stage + 1];
+    const coordinates = (index, dest) => ({
+      x: 12 + (index % cols) * cell,
+      y: (dest ? bottom : top) + Math.floor(index / cols) * rowHeight
+    });
+    if (!svg || rebuild || width !== lastWidth) {
+      lastWidth = width;
+      host.replaceChildren();
+      svg = element('svg', {class: 'rb-diagram', viewBox: `0 0 ${width} ${height}`, role: 'img', 'aria-label': 'Before and after a group swap. Each tile shows a bit value and its original position.'}, host);
+      const title = element('title', {}, svg);
+      title.textContent = 'Bit movement through a reversal stage';
+      const defs = element('defs', {}, svg);
+      for (const category of ['higher', 'lower']) {
+        const marker = element('marker', {id: `rb-arrow-${category}`, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 5, markerHeight: 5, orient: 'auto'}, defs);
+        element('path', {d: 'M 0 0 L 10 5 L 0 10 Z', fill: `var(--viz-series-${category === 'higher' ? 1 : 2})`}, marker);
+      }
+      const edgeLayer = element('g', {}, svg);
+      wires = [];
+      for (let origin = 0; origin < 32; origin++) wires.push(element('path', {class: 'rb-wire'}, edgeLayer));
+      selectedWire = element('path', {class: 'rb-follow-wire'}, edgeLayer);
+      text('Before swap', {x: 12, y: 20}, svg);
+      const beforeValue = text('', {x: width - 12, y: 20, 'text-anchor': 'end', 'data-before-value': ''}, svg);
+      text('After swap', {x: 12, y: bottomTitle}, svg);
+      text('', {x: width - 12, y: bottomTitle, 'text-anchor': 'end', 'data-after-value': ''}, svg);
+      nodes = [[], []];
+      for (let dest = 0; dest < 2; dest++) {
+        for (let origin = 0; origin < 32; origin++) {
+          const group = element('g', {class: 'rb-node'}, svg);
+          const tileWidth = cell - 5;
+          element('rect', {x: 0, y: 0, width: tileWidth, height: 43, rx: 3, fill: 'var(--background)'}, group);
+          element('rect', {x: 0, y: 0, width: tileWidth, height: 43, rx: 3, 'fill-opacity': 0.14, 'data-fill': ''}, group);
+          element('rect', {x: 0, y: 0, width: tileWidth, height: 43, rx: 3, fill: 'none', stroke: 'var(--border)', 'stroke-width': 1, 'data-border': ''}, group);
+          text(String((n >>> origin) & 1), {x: tileWidth / 2, y: 16, 'text-anchor': 'middle'}, group);
+          text('b' + origin, {x: tileWidth / 2, y: 34, 'text-anchor': 'middle'}, group);
+          const desc = element('title', {}, group);
+          desc.textContent = `Original bit ${origin}, value ${(n >>> origin) & 1}`;
+          nodes[dest][origin] = group;
+        }
+      }
+      const groupingLayer = element('g', {'data-grouping': ''}, svg);
+    }
+
+    svg.setAttribute('aria-label', `Stage ${stage + 1}: swap ${size}-bit groups. Afterward every ${size * 2}-bit block is reversed. Input to this stage ${value(before)}, output ${value(after)}.`);
+    svg.querySelector('[data-before-value]').textContent = String(value(before));
+    svg.querySelector('[data-after-value]').textContent = String(value(after));
+    const groupingLayer = svg.querySelector('[data-grouping]');
+    groupingLayer.replaceChildren();
+    for (let dest = 0; dest < 2; dest++) {
+      const order = dest ? after : before;
+      for (let index = 0; index < 32; index++) {
+        const origin = order[index];
+        const sourceIndex = before.indexOf(origin);
+        const lower = (sourceIndex % (size * 2)) >= size;
+        const color = `var(--viz-series-${lower ? 2 : 1})`;
+        const point = coordinates(index, dest);
+        const node = nodes[dest][origin];
+        node.style.transform = `translate(${point.x}px, ${point.y}px)`;
+        node.querySelector('[data-fill]').setAttribute('fill', color);
+        const border = node.querySelector('[data-border]');
+        border.setAttribute('stroke', origin === selected ? color : 'var(--border)');
+        border.setAttribute('stroke-width', origin === selected ? 2 : 1);
+      }
+      for (let start = 0; start < 32; start += size * 2) {
+        const end = start + size * 2;
+        for (let segment = start; segment < end;) {
+          const segmentEnd = Math.min(end, (Math.floor(segment / cols) + 1) * cols);
+          const first = coordinates(segment, dest);
+          const last = coordinates(segmentEnd - 1, dest);
+          element('path', {d: `M ${first.x} ${first.y + 46} v 3 H ${last.x + cell - 5} v -3`, fill: 'none', stroke: 'var(--border)', 'stroke-width': 1}, groupingLayer);
+          segment = segmentEnd;
+        }
+      }
+    }
+    for (let origin = 0; origin < 32; origin++) {
+      const sourceIndex = before.indexOf(origin);
+      const destIndex = after.indexOf(origin);
+      const a = coordinates(sourceIndex, false);
+      const b = coordinates(destIndex, true);
+      const ax = a.x + (cell - 5) / 2;
+      const bx = b.x + (cell - 5) / 2;
+      const ay = a.y + 43;
+      const by = b.y;
+      const mid = (ay + by) / 2;
+      const path = `M ${ax} ${ay} C ${ax} ${mid}, ${bx} ${mid}, ${bx} ${by}`;
+      wires[origin].setAttribute('d', path);
+      if (origin === selected) {
+        const lower = (sourceIndex % (size * 2)) >= size;
+        selectedWire.setAttribute('d', path);
+        selectedWire.setAttribute('stroke', `var(--viz-series-${lower ? 2 : 1})`);
+        selectedWire.setAttribute('marker-end', `url(#rb-arrow-${lower ? 'lower' : 'higher'})`);
+      }
+    }
+    prev.disabled = stage === 0;
+    next.disabled = stage === 4;
+    root.querySelector('[data-stage]').textContent = `Stage ${stage + 1} / 5 · swap ${size}-bit groups`;
+    root.querySelector('[data-blocks]').textContent = `Reversed block size: ${size * 2} bits`;
+    root.querySelector('[data-mask]').textContent = masks[stage];
+    root.querySelector('[data-detail]').textContent = `Original bit ${selected} · value ${(n >>> selected) & 1} · position ${31 - before.indexOf(selected)} → ${31 - after.indexOf(selected)}`;
+    root.dataset.stage = String(stage + 1);
+    root.dataset.result = String(value(after));
+  }
+  prev.addEventListener('click', () => { if (stage > 0) { stage--; draw(); } });
+  next.addEventListener('click', () => { if (stage < 4) { stage++; draw(); } });
+  follow.addEventListener('change', () => { selected = Number(follow.value); draw(); });
+  const observer = new ResizeObserver(() => draw());
+  observer.observe(host);
+  draw();
+})();
+</script>

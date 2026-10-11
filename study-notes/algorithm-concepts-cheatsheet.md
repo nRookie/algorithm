@@ -7,6 +7,9 @@ the derivation, code, and detailed proof; the rule should make sense without the
 For the process of deriving a solution, use
 [the solving workflow](algorithm-solving-workflow.md).
 
+For binary-search conventions, proof patterns, and wording corrections from
+our practice, use [the binary search cheatsheet](binary-search-cheatsheet.md).
+
 ## Input access determines what must be retained
 
 An algorithm that needs earlier input or both endpoints cannot directly reuse
@@ -64,6 +67,249 @@ general rule that every greedy earliest choice is correct.
 
 Reference: [Occurrence lists and greedy matching](../leetcode/392_is_subsequence/EXPLANATION.md).
 
+## Access a logical sequence without materializing it
+
+If an algorithm needs indexed access rather than a copied representation,
+calculate each logical element from the original storage. Constant-time
+mapping preserves the algorithm's lookup cost while avoiding linear copying
+time and storage. Include mapping costs if access is not constant-time.
+
+For a rectangular matrix with m rows and n > 0 columns, row-major index
+`i = row * n + column` is inverted by `row = i / n`, `column = i % n`.
+The division theorem uniquely expresses i as `q * n + s`, with `0 <= s < n`;
+for `0 <= i < m * n`, both coordinates are valid. This proves a one-to-one
+mapping. Require fixed row width and arithmetic that does not overflow.
+
+Index correctness does not imply sorted values. Binary search additionally
+requires a monotone virtual sequence: sorted rows and ordered boundaries
+between rows suffice. Sorted rows alone do not: `[[1,5],[2,6]]` flattens to
+`[1,5,2,6]`.
+
+A reverse view of a sequence of length N maps logical index i to `N - 1 - i`.
+When only reverse traversal is needed, a descending index avoids a reversed
+copy. This removes copying and allocations, but an already-linear scan remains
+O(N); any separately constructed output still counts toward space usage.
+
+References: [Virtual indexing and its proof](../leetcode/74_search_a_2d_matrix/EXPLANATION.md),
+[Reverse traversal without input copies](../leetcode/67_add_binary/EXPLANATION.md).
+
+## Split a digit total into remainder and carry
+
+For nonnegative column total s in positional base k >= 2, the division identity
+`s = k * (s / k) + s % k` gives the output digit `s % k` and next carry `s / k`.
+Process least significant digits first because their carry affects the next
+column. For two numbers, valid digits and an incoming carry at most 1 imply
+`s <= 2 * (k - 1) + 1`, so the outgoing carry is also at most 1.
+
+Align numbers at their least significant digits; missing higher digits contribute
+zero. Continue while either input has digits **or** carry remains. Append the
+digits as discovered and reverse once. Fixed-width integer conversion cannot
+handle arbitrary-length input; per-column arithmetic avoids that overflow when
+the column total itself fits the chosen integer type.
+
+Reference: [String addition and carry invariant](../leetcode/67_add_binary/EXPLANATION.md).
+
+## Bitwise operations act on integer bits, not Boolean conditions
+
+Kotlin uses named operations on `Int` (32 bits) and `Long` (64 bits), rather
+than C++ bitwise symbols. AND keeps positions set in both operands, OR keeps
+positions set in either, XOR keeps differing positions, and inversion flips
+every bit, including the sign bit.
+
+| Operation | C++ | Kotlin |
+| --- | --- | --- |
+| Bitwise AND | `a & b` | `a and b` |
+| Bitwise OR | `a \| b` | `a or b` |
+| Bitwise XOR | `a ^ b` | `a xor b` |
+| Bitwise NOT | `~a` | `a.inv()` |
+| Left shift | `a << k` | `a shl k` |
+| Right shift preserving sign | `a >> k` on signed values (see caveat below) | `a shr k` |
+| Right shift filling with zeros | `a >> k` on unsigned values | `a ushr k` |
+
+C++ guarantees arithmetic right shift of negative signed values since C++20;
+earlier versions made it implementation-defined. The table compares operations,
+not all overflow and shift-count rules across languages.
+
+For nonnegative x, `x and 1` equals `x % 2`, and `x shr 1` equals integer
+`x / 2`: the last bit is the remainder, and removing it gives the quotient.
+Example: `3 = 11₂`, so masking gives 1 and shifting gives 1. These replacements
+do not improve asymptotic complexity. For negative values the equivalence can
+fail: `-3 shr 1` is -2, but `-3 / 2` is -1. `shr` preserves the sign;
+`ushr` inserts zeros. Left shift multiplies by powers of two only when the
+mathematical result fits without overflow. `6.inv()` is -7, not a flip of only
+the three displayed bits of `110`.
+
+For bit index k counted from zero at the right, use `mask = 1 shl k`:
+
+| Purpose | Kotlin |
+| --- | --- |
+| Check bit k | `(x and mask) != 0` |
+| Set bit k | `x or mask` |
+| Clear bit k | `x and mask.inv()` |
+| Toggle bit k | `x xor mask` |
+
+Use k in `0..31` for `Int`; use `1L shl k` with k in `0..63` for `Long`.
+Kotlin masks shift counts to the type width, so shifting by the width does not
+select a new bit. Parenthesize bitwise expressions before comparisons.
+Boolean short-circuit operations remain `&&`, `||`, and `!` in both languages;
+they are separate from integer bitwise operations.
+
+Each hexadecimal digit represents four bits: `3 = 0011`, `5 = 0101`,
+`F = 1111`. Eight hex digits can display a full 32-bit mask. Repeated patterns
+are easier to inspect in hex: `0x55555555` selects alternating bits throughout
+an `Int`, whereas `0x55` selects them only in the lowest byte. Leading zeros
+in a literal are optional; the required higher-position ones are not.
+Use a positive selection mask's `.inv()` for its full-width complement;
+a positive literal such as `0xAAAAAAAA` exceeds `Int.MAX_VALUE` and is inferred
+as `Long` when no narrower compatible type applies.
+
+References: [Binary addition with arithmetic or bitwise operations](../leetcode/67_add_binary/EXPLANATION.md),
+[Hexadecimal masks and signed shifts](../leetcode/190_reverse_bits/EXPLANATION.md).
+
+## Respect fixed-width representation boundaries
+
+When a task transforms a W-bit pattern, process all W positions, including
+leading zeros and the sign bit. Stopping when the numeric value becomes zero
+loses positions: reversing `110` gives `011`, but reversing an 8-bit pattern
+`00000110` gives `01100000`. Signed values still contain valid bit patterns;
+`current > 0` skips all negative inputs.
+
+`shr` copies the sign bit; `ushr` inserts zeros. Repeated `shr` on a negative
+value eventually reaches -1 and stays there, so a loop waiting for zero cannot
+terminate. In a loop extracting the lowest bit **before** each shift exactly
+W times, either shift reads the same original W bits: inserted bits would first
+be read on extraction W + 1. This equivalence is specific to that access order;
+group recombination can require `ushr` to keep vacated positions zero.
+
+Reference: [Fixed-width reversal and shift qualification](../leetcode/190_reverse_bits/EXPLANATION.md).
+
+## Reverse larger blocks by swapping already-reversed halves
+
+For a fixed-width bit pattern whose width W is a power of two, swap neighboring
+groups of sizes `1, 2, 4, ..., W / 2`. After swapping groups of size s, every
+2s-bit block is reversed relative to the original. Initially single-bit groups
+are trivially reversed; exchanging `reverse(A)` and `reverse(B)` produces
+`reverse(B) + reverse(A) = reverse(A + B)`, establishing the next larger block.
+
+Select the lower s bits of every 2s-bit block with a mask, select the upper
+groups with its full-width complement, and shift the groups by s in opposite
+directions. OR combines them because their destination fields are disjoint.
+Masks must cover the full word at every stage; a short mask clears higher data.
+Use unsigned right shift so negative masked values do not introduce extra ones.
+
+There are log₂ W swap stages. This is a stage count with word-operation costs
+accounted for separately, not a constant-cost claim for arbitrary-precision
+integers. For native 32-bit words, both five swap stages and a 32-iteration
+bit loop have O(1) time and space; actual speed requires measurement.
+
+Reference: [Growing-group reversal proof and diagram](../leetcode/190_reverse_bits/EXPLANATION.md).
+
+## Keep binary-search boundaries consistent with the search objective
+
+For a sorted sequence of length N, a lower-bound search starts with
+`left = 0`, `right = N`. Maintain values before left `< target` and values
+at or after right `>= target`. Discard through mid with `left = mid + 1`
+when its value is smaller; otherwise retain mid with `right = mid`.
+The undecided elements occupy `[left, right)`, but the answer may be either
+endpoint. Strict shrinking gives convergence to the first qualifying index,
+or N if none exists. Check the result is below N before testing equality.
+
+Initializing `right = N` also makes the classified suffix empty, so its
+invariant holds without assuming that the last element qualifies. N represents
+a no-match boundary, not an element index. Convert that boundary to a problem
+answer only with a separate justification; modulo is not a general no-match fix.
+
+For direct membership, search inclusive candidates `[left, right]`, starting
+with `right = N - 1` and looping while `left <= right`. Return on equality;
+otherwise discard mid with `left = mid + 1` or `right = mid - 1`. An empty
+interval proves absence. Do not mix initialization, updates, or termination
+from different conventions; a progress argument must accompany the invariant.
+
+For nonempty inclusive candidates with `while left < right`, retaining mid
+on the right (`right = mid`) requires a lower midpoint to ensure `mid < right`.
+Retaining mid on the left (`left = mid`) requires an upper midpoint to ensure
+`mid > left`. Pair the other update with `left = mid + 1` or `right = mid - 1`,
+respectively. A lower midpoint with `left = mid` can stall on two candidates.
+
+For a rightmost-true boundary search, a passing midpoint need not be the final
+answer: retain it with `left = mid` and search farther right. A failing midpoint
+and every later candidate can be discarded only when the predicate is true
+then false. The remaining interval contains the boundary; it need not consist
+entirely of passing candidates. With `left < right`, process the singleton
+after convergence. Establish that a passing candidate exists, or separately
+handle the case where none exists.
+
+In a sorted array, first `>= target` and last `<= target` give the ends of
+the target's equal-value block once existence is verified. An inclusive
+first-qualifying search initialized with `right = N - 1` stops at the last
+index if nothing qualifies; convergence alone does not prove a match.
+
+References: [Lower-bound proof](../leetcode/35_search_insert_position/EXPLANATION.md),
+[Membership variants](../leetcode/74_search_a_2d_matrix/EXPLANATION.md),
+[First and last occurrences](../leetcode/34_find_first_and_last_position_of_element_in_sorted_array/EXPLANATION.md).
+
+For English wording about positions and ranges, see
+[the interview phrases cheatsheet](algorithm-interview-phrases.md#prepositions-for-positions-ranges-and-updates).
+
+## Recover an order statistic from a partition of sorted sequences
+
+For two nondecreasing sequences and rank `1 <= h <= m + n`, a left portion
+containing the h smallest elements takes a prefix from each: counts i and j
+satisfy `i + j = h`.
+A cut is a count, not an element index: the last left index is `i - 1`,
+and the first right index is i. For length m, cuts range from 0 through m.
+
+Within each sequence, sortedness already orders its left and right portions.
+It therefore suffices to check the two cross-sequence boundaries:
+`lastLeftA <= firstRightB` and `lastLeftB <= firstRightA`.
+When both hold, the largest left boundary is the h-th smallest element;
+the smallest right boundary is the next one, when present. Equality is valid.
+Neither combined portion needs to be physically sorted or materialized.
+
+For a nonempty combined input, choosing `h = (m + n + 1) / 2` places an odd
+median on the left. Return the largest left value for odd totals; average
+the largest left and smallest right values for even totals. Represent absent
+left boundaries by negative infinity and absent right boundaries by positive
+infinity for comparisons; guard the array accesses themselves.
+
+Increasing i decreases j, so `lastLeftA <= firstRightB` changes only from
+true to false. Its rightmost passing cut also satisfies the other inequality:
+if a next cut exists, its failure compares the current first-right A value
+with the current last-left B value; at the end of A, its right side is empty.
+For this middle-rank choice, searching the shorter sequence over all its cuts
+keeps j within bounds. This gives O(1 + log(min(m, n) + 1)) time and O(1)
+auxiliary space, including an empty shorter sequence.
+
+Example: `[1,3 | 8]` and `[2 | 7,9]` give middle values 3 and 7, not 3 and 8.
+
+## Halving must preserve the kind of answer requested
+
+A first/last boundary search requires a monotone predicate: truth values
+change at most once over the domain. The values themselves need not be
+globally sorted if another classification is monotone. A rotated distinct
+ascending array has a single boundary for `value >= firstValue`; duplicates
+can invalidate that classification.
+
+When classifying by an anchor, assign equality to exactly one side and check
+the anchor itself. Distinct values still include the anchor's equality with
+itself. On `[3,4,5,1,2]`, `value <= firstValue` produces
+`true,false,false,true,true`, which cannot support a first-true search;
+`value < firstValue` produces `false,false,false,true,true`. Non-rotated input
+makes the latter predicate false everywhere, so the no-match boundary matters.
+
+Searching for any valid answer can instead retain a half proved to contain
+one. With unequal adjacent values and negative-infinity outside neighbors,
+an interval whose endpoints exceed their outside neighbors contains a peak:
+a maximum within the interval is strictly higher than both its neighbors.
+A midpoint slope establishes a new endpoint condition while leaving the
+other unchanged. This finds any peak, not necessarily the first, and does
+not prove the discarded half has no peaks.
+
+References: [Peak existence invariant](../leetcode/162_find_peak_element/EXPLANATION.md),
+[Monotone rotation classification](../leetcode/33_search_in_rotated_sorted_array/EXPLANATION.md).
+
+Related mistake note: [Anchor equality and the no-match boundary](<../leetcode/153_find_minimum_in_rotated_sorted_array/mistake I made.md>).
+
 ## Reuse exact matches through prefix–suffix overlaps
 
 For contiguous exact string matching, after a mismatch, a candidate starting
@@ -102,6 +348,10 @@ For `[1,2,3,4]`, excluding index 2 gives `2 * 4 = 8`.
 
 **Limit:** Numeric overflow still matters. Removing an element by division
 requires assumptions that fail at zero.
+
+Widen operands before arithmetic when their combined result may overflow.
+For example, convert both integer middle values to `Double` before adding
+and averaging them; converting an already-overflowed sum cannot repair it.
 
 Reference: [Product Except Self](../leetcode/238_product_of_array_except_self/EXPLANATION.md).
 
@@ -175,6 +425,42 @@ prove the surviving candidate completes the whole task. Prove the remaining
 portion separately, including any wraparound.
 
 Reference: [Gas Station](../leetcode/134_gas_station/EXPLANATION.md).
+
+## Enforce a one-to-one correspondence in both directions
+
+For two equal-length indexed sequences, a valid one-to-one replacement requires
+each source value to keep the same target and each target to belong to only one
+source. Maintain forward and reverse maps; for each pair, create a missing
+mapping or verify that its stored value matches. The maps remain inverses on
+all processed pairs. Check conflicts before overwriting; a map cannot retain
+two different values for one key.
+
+The reverse direction is essential: `[a,b] → [x,x]` passes forward consistency
+but fails target uniqueness. Pairing values at the same index already checks
+order, so these checks can run during map construction without a second pass.
+For local mapping constraints, the first conflict is irreversible. Merging
+two linear passes improves early failure and constants, not the O(n) bound.
+Include key hashing/comparison costs when keys are strings.
+
+References: [Character correspondence](../leetcode/205_isomorphic_strings/EXPLANATION.md),
+[Character-to-word correspondence](../leetcode/290_word_pattern/EXPLANATION.md).
+
+## Scan literal separators with an explicit empty-token policy
+
+For a nonempty literal separator, skip consecutive matches, remember the word
+start, then scan until the next match or end. Emit only nonempty spans if empty
+tokens should be ignored. Advance by the separator length when consuming a
+match, and by one character while scanning ordinary content. A complete string
+separator is different from a set of separator characters or a regular expression.
+
+Every transition advances the index, proving termination; an empty separator
+breaks this progress argument and must be handled separately or rejected.
+With naive matching, scanning N characters against a D-character separator
+can cost O(ND), despite monotonic advancement. A single-character separator
+gives O(N) scanning. Example: `"dog  cat"` split on `" "` has two words under
+the ignore-empty policy; consuming only one space can produce an empty token.
+
+Reference: [Literal string splitter and trace](../leetcode/290_word_pattern/EXPLANATION.md).
 
 ## Combine data structures through an explicit shared invariant
 

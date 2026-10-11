@@ -1,0 +1,4 @@
+interface:
+  display_name: "Algorithm Recap"
+  short_description: "Recap old algorithm notes by topic in Kotlin"
+  default_prompt: "Use $algorithm-recap to organize this Markdown memo by topic, convert its code to Kotlin collections, and find related LeetCode exercises."

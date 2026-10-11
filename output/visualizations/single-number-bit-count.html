@@ -1,0 +1,191 @@
+<div id="single-number-bit-count">
+  <h3>Find the number that appears once</h3>
+  <div class="viz-controls">
+    <label class="form-label">Example
+      <select class="form-select" data-example>
+        <option value="0">[2, 2, 3, 2]</option>
+        <option value="1">[0, 1, 0, 1, 0, 1, 5]</option>
+        <option value="2">[-2, -2, -7, -2]</option>
+      </select>
+    </label>
+    <button type="button" class="btn" data-prev>Previous</button>
+    <button type="button" class="btn btn-primary" data-next>Next</button>
+    <button type="button" class="btn" data-play>Play</button>
+  </div>
+  <div class="viz-row sn-inputs" data-inputs aria-label="Input array"></div>
+  <div class="viz-row sn-status" aria-live="polite"><span data-phase></span><span>•</span><span data-result class="tabular-nums"></span></div>
+  <div data-diagram></div>
+  <div class="text-small tabular-nums" data-detail aria-live="polite"></div>
+</div>
+<style>
+  #single-number-bit-count { color: var(--foreground); width: 100%; }
+  #single-number-bit-count .sn-inputs { margin-top: 12px; }
+  #single-number-bit-count .sn-inputs code { padding: 4px 8px; }
+  #single-number-bit-count .sn-inputs code[data-active="true"] { background: var(--accent); color: var(--accent-foreground); }
+  #single-number-bit-count .sn-inputs code[data-processed="true"] { text-decoration: underline; text-underline-offset: 4px; }
+  #single-number-bit-count .sn-status { margin-top: 12px; }
+  #single-number-bit-count .sn-diagram { display: block; width: 100%; }
+  #single-number-bit-count .sn-diagram text { font-size: 12px; fill: var(--foreground); }
+  #single-number-bit-count .sn-diagram .sn-bar { transition: transform 250ms ease; }
+  @media (prefers-reduced-motion: reduce) {
+    #single-number-bit-count .sn-diagram .sn-bar { transition: none; }
+  }
+</style>
+<script>
+(() => {
+  const root = document.getElementById('single-number-bit-count');
+  const host = root.querySelector('[data-diagram]');
+  const selector = root.querySelector('[data-example]');
+  const previous = root.querySelector('[data-prev]');
+  const next = root.querySelector('[data-next]');
+  const play = root.querySelector('[data-play]');
+  const examples = [[2, 2, 3, 2], [0, 1, 0, 1, 0, 1, 5], [-2, -2, -7, -2]];
+  const ns = 'http://www.w3.org/2000/svg';
+  let exampleIndex = 0;
+  let step = 0;
+  let timer = null;
+  let svg = null;
+  let lastWidth = 0;
+  let cells = [];
+
+  function loadState(snapshot) {
+    const saved = snapshot && snapshot.privateContent;
+    if (!saved) return;
+    if (Number.isInteger(saved.exampleIndex) && saved.exampleIndex >= 0 && saved.exampleIndex < examples.length) exampleIndex = saved.exampleIndex;
+    if (Number.isInteger(saved.step)) step = Math.max(0, Math.min(saved.step, examples[exampleIndex].length + 32));
+  }
+  loadState(window.openai && window.openai.widgetState);
+
+  function calculate() {
+    const nums = examples[exampleIndex];
+    const consumed = Math.min(step, nums.length);
+    const assembled = Math.max(0, step - nums.length);
+    const count = Array(32).fill(0);
+    for (let k = 0; k < consumed; k++) {
+      for (let i = 0; i < 32; i++) count[i] += (nums[k] >>> i) & 1;
+    }
+    let result = 0;
+    for (let i = 0; i < assembled; i++) result |= (count[i] % 3) << i;
+    return {nums, consumed, assembled, count, result};
+  }
+  function persist() {
+    if (!window.openai || typeof window.openai.setWidgetState !== 'function') return;
+    const state = calculate();
+    window.openai.setWidgetState({
+      modelContent: {nums: state.nums, step, processedNumbers: state.consumed, assembledBits: state.assembled, result: state.result},
+      privateContent: {exampleIndex, step}
+    }).catch(() => {});
+  }
+  function element(tag, attrs, parent) {
+    const node = document.createElementNS(ns, tag);
+    for (const [key, value] of Object.entries(attrs || {})) node.setAttribute(key, String(value));
+    if (parent) parent.appendChild(node);
+    return node;
+  }
+  function label(value, attrs, parent) {
+    const node = element('text', attrs, parent);
+    node.textContent = value;
+    return node;
+  }
+  function stop() {
+    if (timer !== null) clearInterval(timer);
+    timer = null;
+    play.textContent = 'Play';
+    play.setAttribute('aria-pressed', 'false');
+  }
+  function draw() {
+    const state = calculate();
+    selector.value = String(exampleIndex);
+    const width = Math.max(280, Math.round(host.getBoundingClientRect().width));
+    const cols = width >= 640 ? 16 : 8;
+    const chunks = 32 / cols;
+    const left = 64;
+    const cellWidth = (width - left - 8) / cols;
+    const chunkHeight = 154;
+    const height = chunks * chunkHeight;
+    if (!svg || width !== lastWidth) {
+      lastWidth = width;
+      host.replaceChildren();
+      svg = element('svg', {class: 'sn-diagram', viewBox: `0 0 ${width} ${height}`, role: 'img'}, host);
+      const title = element('title', {}, svg);
+      title.textContent = 'All 32 bit positions: input bit, accumulated count, count modulo three, and reconstructed result bit.';
+      cells = [];
+      for (let chunk = 0; chunk < chunks; chunk++) {
+        const y = chunk * chunkHeight;
+        label('Bit', {x: 4, y: y + 22}, svg);
+        label('Input', {x: 4, y: y + 47}, svg);
+        label('Count', {x: 4, y: y + 82}, svg);
+        label('Mod 3', {x: 4, y: y + 110}, svg);
+        label('Result', {x: 4, y: y + 136}, svg);
+        element('path', {d: `M 4 ${y + 147} H ${width - 4}`, fill: 'none', stroke: 'var(--border)', 'stroke-width': 1}, svg);
+        for (let col = 0; col < cols; col++) {
+          const i = 31 - (chunk * cols + col);
+          const x = left + col * cellWidth + cellWidth / 2;
+          const selected = element('rect', {x: x - cellWidth / 2 + 1, y: y + 8, width: cellWidth - 2, height: 132, fill: 'var(--viz-series-2)', 'fill-opacity': 0}, svg);
+          label(String(i), {x, y: y + 22, 'text-anchor': 'middle'}, svg);
+          const bitLabel = label('—', {x, y: y + 47, 'text-anchor': 'middle'}, svg);
+          const bar = element('rect', {x: -Math.min(9, cellWidth / 4), y: -26, width: Math.min(18, cellWidth / 2), height: 26, fill: 'var(--viz-series-1)', 'fill-opacity': 0.22, class: 'sn-bar'}, svg);
+          const countLabel = label('0', {x, y: y + 82, 'text-anchor': 'middle'}, svg);
+          const remainderLabel = label('—', {x, y: y + 110, 'text-anchor': 'middle'}, svg);
+          const resultLabel = label('0', {x, y: y + 136, 'text-anchor': 'middle'}, svg);
+          cells[i] = {x, y, selected, bitLabel, bar, countLabel, remainderLabel, resultLabel};
+        }
+      }
+    }
+    const inputActive = step > 0 && step <= state.nums.length;
+    const current = inputActive ? state.nums[step - 1] : null;
+    const currentBit = state.assembled ? state.assembled - 1 : -1;
+    const peak = state.nums.length;
+    for (let i = 0; i < 32; i++) {
+      const cell = cells[i];
+      cell.bitLabel.textContent = current === null ? '—' : String((current >>> i) & 1);
+      cell.countLabel.textContent = String(state.count[i]);
+      cell.remainderLabel.textContent = i < state.assembled ? String(state.count[i] % 3) : '—';
+      cell.resultLabel.textContent = String((state.result >>> i) & 1);
+      cell.selected.setAttribute('fill-opacity', i === currentBit ? 0.13 : 0);
+      cell.bar.style.transform = `translate(${cell.x}px, ${cell.y + 85}px) scale(1, ${state.count[i] / peak})`;
+    }
+    const inputs = root.querySelector('[data-inputs]');
+    inputs.replaceChildren();
+    state.nums.forEach((x, index) => {
+      const node = document.createElement('code');
+      node.textContent = String(x);
+      node.setAttribute('data-active', String(inputActive && index === step - 1));
+      node.setAttribute('data-processed', String(index < state.consumed));
+      node.setAttribute('aria-label', `Index ${index}, value ${x}${index < state.consumed ? ', processed' : ''}`);
+      inputs.appendChild(node);
+    });
+    const phase = step === 0 ? 'Ready · 32 bit positions' : inputActive ? `Count number ${step} / ${state.nums.length}` : state.assembled === 32 ? 'Complete · all 32 bits reconstructed' : `Reconstruct bit ${currentBit} · ${state.assembled} / 32`;
+    root.querySelector('[data-phase]').textContent = phase;
+    root.querySelector('[data-result]').textContent = 'Result: ' + state.result;
+    root.querySelector('[data-detail]').textContent = step === 0 ? 'All counters start at zero.' : inputActive ? `Current number: ${current} · processed: ${state.consumed} / ${state.nums.length}` : `Bit ${currentBit} · count ${state.count[currentBit]} · remainder ${state.count[currentBit] % 3} · result ${state.result}`;
+    svg.setAttribute('aria-label', `${phase}. Result ${state.result}. Columns run from the most significant bit to the least significant bit; reconstruction visits positions 0 through 31.`);
+    previous.disabled = step === 0;
+    next.disabled = step === state.nums.length + 32;
+    root.dataset.step = String(step);
+    root.dataset.result = String(state.result);
+    root.dataset.example = String(exampleIndex);
+  }
+  previous.addEventListener('click', () => {stop(); step = Math.max(0, step - 1); draw(); persist();});
+  next.addEventListener('click', () => {stop(); step = Math.min(examples[exampleIndex].length + 32, step + 1); draw(); persist();});
+  selector.addEventListener('change', () => {stop(); exampleIndex = Number(selector.value); step = 0; draw(); persist();});
+  play.addEventListener('click', () => {
+    if (timer !== null) {stop(); return;}
+    if (step === examples[exampleIndex].length + 32) step = 0;
+    play.textContent = 'Pause';
+    play.setAttribute('aria-pressed', 'true');
+    draw();
+    persist();
+    timer = setInterval(() => {
+      step++;
+      if (step >= examples[exampleIndex].length + 32) {step = examples[exampleIndex].length + 32; stop();}
+      draw(); persist();
+    }, 450);
+  });
+  window.addEventListener('openai:set_globals', event => {
+    if (event.detail && event.detail.globals && event.detail.globals.widgetState) {stop(); loadState(event.detail.globals.widgetState); draw();}
+  });
+  new ResizeObserver(draw).observe(host);
+  draw();
+})();
+</script>
