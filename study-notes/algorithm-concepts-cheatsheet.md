@@ -10,6 +10,23 @@ For the process of deriving a solution, use
 For binary-search conventions, proof patterns, and wording corrections from
 our practice, use [the binary search cheatsheet](binary-search-cheatsheet.md).
 
+## Choose the state range using the constraints
+
+A correct recurrence can still require too much time or memory. Compare the
+parameters each approach depends on: 0/1 knapsack capacity DP costs O(NW) time
+and O(W) space, while take-or-skip search costs O(2ᴺ) time with constant work per
+call. Small N can make enumeration practical even when numeric capacity W is huge.
+For N=20 and W=10⁹, a LongArray indexed by capacity needs about 8 GB, whereas
+the full binary search tree has about 2.1 million calls. Knapsack is a problem
+type, not a requirement to use capacity DP. Neither method wins for all limits.
+
+Check intermediate-value bounds separately from state counts. N values of at
+most M can sum to N·M even if each fits Int: `20 * 10⁹` needs Long. Choose types
+from the values actually stored; remaining capacity bounded by W need not hold
+the unrestricted sum of every item's volume.
+
+Reference: [Knapsack: large capacity, few items](../atcoder/abc479/c/EXPLANATION.md).
+
 ## Input access determines what must be retained
 
 An algorithm that needs earlier input or both endpoints cannot directly reuse
@@ -541,12 +558,20 @@ instead. A DP with mn states and constant work per state takes Θ(mn), regardles
 of the number of paths. Square-grid path counts grow exponentially in side
 length, not in total cell count.
 
+For a take-or-skip recursion of depth N, there are at most 2ᴺ leaves and
+`1 + 2 + ... + 2ᴺ = 2ᴺ⁺¹ - 1` total calls. Constant work per call gives O(2ᴺ)
+time; rescanning N items at every leaf gives O(N·2ᴺ). Only O(N) calls are active
+at once, so stack space is O(N), unless results or branches are also stored.
+Pruning may help but does not improve this worst-case bound when all branches
+remain feasible. Operation counts do not imply a fixed runtime in seconds.
+
 Include pending entries, recursion depth, copies, and library operations in
 the analysis; qualify amortized costs. Reducing stored data does not automatically
 reduce computation.
 
 References: [Counting range scans](../leetcode/45_jump_game_ii/dp/EXPLANATION.md),
-[Path enumeration versus DP](../leetcode/174_dungeon_game/LEARNING_SUMMARY.md).
+[Path enumeration versus DP](../leetcode/174_dungeon_game/LEARNING_SUMMARY.md),
+[Binary decision-tree work](../atcoder/abc479/c/EXPLANATION.md#count-dfs-work-and-choose-numeric-types).
 
 ## Execution style, search order, and DP describe different things
 
@@ -562,7 +587,14 @@ These views can overlap, but neither is implied merely by a request to minimize.
 short-circuiting, such as `search(a) || search(b)`, allows early success but does
 not prevent cycles or replace visited-state handling.
 
-Reference: [BFS and DP comparison](../leetcode/45_jump_game_ii/two_queue_bfs/EXPLANATION.md).
+A recursive optimization function can return the best additional score from
+the remaining choices, rather than carry an accumulated score. Define its
+arguments as the future situation and combine returned scores at the parent.
+Without caching, this is still exhaustive recursion, even if it uses a DP-like
+recurrence. An empty choice justifies a zero base answer only when permitted.
+
+References: [BFS and DP comparison](../leetcode/45_jump_game_ii/two_queue_bfs/EXPLANATION.md),
+[Returning the best suffix score](../atcoder/abc479/c/EXPLANATION.md).
 
 ## Compress state only when discarded distinctions cannot affect the answer
 
@@ -711,7 +743,15 @@ for eventual reachability, which is a different state definition.
 **Cost:** Keeping two layers reduces space; it does not remove the work of
 computing every layer. Rejustify correctness when changing update order.
 
-Reference: [Layered reachability](../leetcode/1306_jump_game_iii/EXPLANATION.md).
+For 0/1 knapsack with positive item volume v, descending capacity ensures
+`dp[j-v]` still belongs to the previous item layer when updating `dp[j]`.
+Ascending capacity can reuse the current item: one item with volume 5 and value
+4 gives `dp[5]=4`, then illegally `dp[10]=8`. Keeping the old `dp[j]` represents
+skipping the item. Zero initialization means capacity **at most j**, where the
+empty choice is feasible; exact-fill states need an unreachable marker.
+
+References: [Layered reachability](../leetcode/1306_jump_game_iii/EXPLANATION.md),
+[Descending-capacity invariant](../atcoder/abc479/c/EXPLANATION.md).
 
 ## Process changed answers through their dependents
 

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AcWing 846 · DFS execution</title>
+<style>
+:root{color-scheme:light dark;--bg:light-dark(#f7f8fa,#15191f);--panel:light-dark(#fff,#20262e);--text:light-dark(#172431,#e5edf6);--muted:light-dark(#516170,#b3c0ce);--line:light-dark(#cbd4dc,#485667);--active:light-dark(#156dba,#81c4ff);--soft:light-dark(#e2effb,#213c55);--done:light-dark(#197457,#80d4b8);--other:light-dark(#9a5c15,#edb768)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,sans-serif}main{max-width:1280px;margin:auto;padding:24px}h1{font-size:26px;margin:0}h2{font-size:17px;margin:0 0 12px}p{margin:8px 0 16px}.muted{color:var(--muted)}.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:20px 0}button{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:9px 15px;font:inherit;cursor:pointer}button:disabled{opacity:.45;cursor:default}input[type=range]{flex:1;min-width:140px;accent-color:var(--active)}.layout{display:grid;grid-template-columns:minmax(300px,1fr) minmax(400px,1.1fr);gap:24px}.panel{background:var(--panel);padding:20px;border-radius:12px;min-width:0}.graph{width:100%;height:310px;display:block}svg text{fill:var(--text);font:14px system-ui}.status{min-height:52px;font-size:18px;margin-bottom:16px}.stats{display:flex;gap:20px;flex-wrap:wrap;padding:12px 0;font-variant-numeric:tabular-nums}.code{counter-reset:line;list-style:none;margin:0;padding:0;font:14px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace}.code li{display:flex;white-space:pre-wrap;overflow-wrap:anywhere;border-radius:3px;padding:1px 6px;min-height:26px}.code li::before{content:attr(data-line);width:26px;flex-shrink:0;color:var(--muted);user-select:none}.code li.current{background:var(--soft);outline:2px solid var(--active)}table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}th,td{text-align:left;padding:7px 5px;border-bottom:1px solid var(--line)}tr.top{background:var(--soft)}.legend{font-size:14px;min-height:48px}.stack{margin-top:20px}.foot{margin-top:20px;font-size:14px}code{font-family:ui-monospace,monospace}a{color:var(--active)}@media(max-width:850px){.layout{grid-template-columns:1fr}main{padding:14px}.panel{padding:14px}.code{font-size:13px}h1{font-size:23px}}
+</style>
+</head>
+<body><main>
+<h1>AcWing 846 · Follow your DFS</h1>
+<p class="muted">Five-node discussion tree · n = 5 · state shown after the highlighted operation, except calls marked “calling”.</p>
+<p class="muted">Your variable names and logic, with the missing <code>)</code> on source line 9 corrected for this walkthrough. Comments and blank lines are hidden; numbers refer to your source.</p>
+<div class="controls"><button id="prev">← Previous</button><button id="next">Next →</button><label for="position">Step <span id="step"></span></label><input id="position" type="range" min="0" value="0" aria-label="Execution step"><button id="end">Final result</button></div>
+<div id="message" class="status" aria-live="polite"></div>
+<div class="layout">
+<section class="panel"><h2 id="graph-title">Tree rooted at 1</h2><svg class="graph" id="graph" role="img" aria-label="Tree with edges 1–2, 1–3, 2–4, 2–5"></svg><div class="legend" id="legend"></div><div class="stats" id="stats"></div>
+<div class="stack"><h2>Call stack · active call in the last row</h2><table><thead><tr><th>u / parent</th><th>sum</th><th>maxPart</th><th>v</th><th>subSum</th></tr></thead><tbody id="stack"></tbody></table></div>
+</section>
+<section class="panel"><h2>Your Kotlin code</h2><ol class="code" id="code"></ol></section>
+</div>
+<p class="foot muted">At the outside-component check, the graph shows hypothetical removal of u. The algorithm never changes the graph. Each call returns sum; res tracks the minimum maxPart across evaluated nodes.</p>
+<p class="foot"><a href="VISUALIZATION.html">Open the simpler subtree / removal comparison</a></p>
+</main>
+<script>
+(() => {
+const source = [
+[1,'fun minimumLargestComponent(n: Int, graph: List<List<Int>>): Int {'],
+[4,'    var res = Int.MAX_VALUE'],
+[5,'    fun dfs(u: Int, parent: Int): Int {'],
+[7,'        var sum = 1'],[8,'        var maxPart = 0'],
+[9,'        for (v in graph[u]) {'],[10,'            if (v == parent) continue'],
+[11,'            val subSum = dfs(v, u)'],[12,'            sum += subSum'],
+[13,'            maxPart = maxOf(maxPart, subSum)'],[14,'        }'],
+[16,'        maxPart = maxOf(maxPart, n - sum)'],[17,'        res = minOf(res, maxPart)'],
+[18,'        return sum'],[20,'    }'],[22,'    dfs(1, 0)'],[23,'    return res'],[25,'}']];
+const graph=[[],[2,3],[1,4,5],[1],[2],[2]], n=5;
+const events=[], stack=[], sizes={}, candidates={};let res=null;
+function emit(line,message,mode='tree') {events.push(JSON.parse(JSON.stringify({line,message,mode,res,stack,sizes,candidates})));}
+emit(4,'Initialize res = Int.MAX_VALUE. No removal candidate has been evaluated.');
+function dfs(u,parent){
+ const f={u,parent,sum:null,maxPart:null,v:null,subSum:null};stack.push(f);
+ emit(5,`Enter dfs(${u}, ${parent}). This call has its own local variables.`);
+ f.sum=1;emit(7,`sum = 1: count node ${u} itself.`);
+ f.maxPart=0;emit(8,'maxPart = 0: no remaining component has been considered yet.');
+ for(const v of graph[u]){
+  f.v=v;f.subSum=null;emit(9,`Take neighbor v = ${v} from graph[${u}] = [${graph[u].join(', ')}].`);
+  emit(10,v===parent?`v = ${v} equals parent: continue skips the backward edge.`:`v = ${v} is not the parent: explore this child.`);
+  if(v===parent)continue;
+  emit(11,`Calling dfs(${v}, ${u}). Pause node ${u}; subSum is not available yet.`);
+  f.subSum=dfs(v,u);emit(11,`Child ${v} returned ${f.subSum}. Resume node ${u} and assign subSum.`);
+  const old=f.sum;f.sum+=f.subSum;emit(12,`sum = ${old} + ${f.subSum} = ${f.sum}: include child ${v}'s subtree.`);
+  const before=f.maxPart;f.maxPart=Math.max(f.maxPart,f.subSum);emit(13,`maxPart = max(${before}, ${f.subSum}) = ${f.maxPart}: consider child ${v}'s component.`);
+ }
+ f.v=null;f.subSum=null;emit(9,`No neighbors remain for node ${u}. The loop ends; sum = ${f.sum}.`);
+ const before=f.maxPart;f.maxPart=Math.max(f.maxPart,n-f.sum);
+ emit(16,`Outside size = ${n} − ${f.sum} = ${n-f.sum}; maxPart = max(${before}, ${n-f.sum}) = ${f.maxPart}.`,'remove');
+ const old=res;res=res===null?f.maxPart:Math.min(res,f.maxPart);candidates[u]=f.maxPart;
+ emit(17,`res = min(${old===null?'Int.MAX_VALUE':old}, ${f.maxPart}) = ${res}: evaluate removing ${u}.`,'remove');
+ sizes[u]=f.sum;emit(18,`Return sum = ${f.sum} from node ${u}. Its maxPart = ${f.maxPart} is a different quantity.`);
+ stack.pop();return f.sum;
+}
+emit(22,'Calling dfs(1, 0). Node 1 is the traversal root; 0 means no parent.');
+const returned=dfs(1,0);
+emit(22,`dfs(1, 0) returned ${returned}, the total subtree size. The outer function does not use this return value.`);
+emit(23,`Return res = ${res}. Removing node 2 gives the smallest largest component: 2 nodes.`);
+if(res!==2 || returned!==5 || JSON.stringify(sizes)!==JSON.stringify({1:5,2:3,3:1,4:1,5:1}))throw Error('Trace self-check failed');
+const code=document.getElementById('code');for(const [line,text] of source){const li=document.createElement('li');li.dataset.line=line;li.textContent=text;code.appendChild(li);}
+const svg=document.getElementById('graph'), slider=document.getElementById('position');slider.max=events.length-1;let index=0;
+const show=x=>x===null?'—':x;
+function parts(u){const seen=new Set([u]),groups=[];for(const start of graph[u]){const group=[],todo=[start];seen.add(start);while(todo.length){const v=todo.pop();group.push(v);for(const next of graph[v])if(!seen.has(next)){seen.add(next);todo.push(next);}}groups.push(group.sort((a,b)=>a-b));}return groups;}
+function draw(){
+ const e=events[index],f=e.stack.at(-1),u=f?.u,remove=e.mode==='remove';
+ document.getElementById('message').textContent=e.message;
+ document.getElementById('step').textContent=`${index+1} / ${events.length}`;slider.value=index;
+ document.getElementById('prev').disabled=index===0;document.getElementById('next').disabled=index===events.length-1;
+ for(const el of code.children){const active=Number(el.dataset.line)===e.line;el.classList.toggle('current',active);if(active)el.setAttribute('aria-current','step');else el.removeAttribute('aria-current');}
+ document.getElementById('stats').textContent=`n = 5   ·   res = ${e.res===null?'Int.MAX_VALUE':e.res}${f?`   ·   current u = ${u}`:''}`;
+ const body=document.getElementById('stack');body.replaceChildren();
+ e.stack.forEach((s,i)=>{const tr=document.createElement('tr');if(i===e.stack.length-1)tr.className='top';for(const value of [`${s.u} / ${s.parent}`,s.sum,s.maxPart,s.v,s.subSum]){const td=document.createElement('td');td.textContent=show(value);tr.appendChild(td);}body.appendChild(tr);});
+ if(!e.stack.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=5;td.textContent='No active DFS calls';tr.appendChild(td);body.appendChild(tr);}
+ const w=svg.getBoundingClientRect().width;svg.setAttribute('viewBox',`0 0 ${w} 310`);svg.replaceChildren();
+ const p={1:[w*.58,38],2:[w*.34,143],3:[w*.79,143],4:[w*.16,251],5:[w*.51,251]};
+ const mark=(tag,attrs,text)=>{const el=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,v);if(text!==undefined)el.textContent=text;svg.appendChild(el);};
+ mark('title',{},e.message);const groups=remove?parts(u):[], colors=['var(--active)','var(--done)','var(--other)'];
+ for(const [a,b]of [[1,2],[1,3],[2,4],[2,5]]){const cut=remove&&(a===u||b===u);mark('line',{x1:p[a][0],y1:p[a][1],x2:p[b][0],y2:p[b][1],stroke:'var(--line)','stroke-width':2,...(cut?{'stroke-dasharray':'4 6',opacity:.3}:{})});}
+ for(const v of [1,2,3,4,5]){const [x,y]=p[v],group=groups.findIndex(g=>g.includes(v));const fill=remove?(v===u?'var(--line)':colors[group]):v===u?'var(--active)':e.sizes[v]?'var(--done)':'var(--line)';mark('circle',{cx:x,cy:y,r:23,fill,'fill-opacity':.18,stroke:v===u?'var(--active)':'var(--line)','stroke-width':v===u?3:1});mark('text',{x,y:y+5,'text-anchor':'middle'},v);
+  if(remove&&v===u)mark('line',{x1:x-16,y1:y-16,x2:x+16,y2:y+16,stroke:'var(--text)','stroke-width':2});
+  const label=remove?(v===u?'removed':`piece ${group+1}`):e.sizes[v]?`returned ${e.sizes[v]}`:v===u?'active':e.stack.some(s=>s.u===v)?'waiting':'';
+  mark('text',{x,y:y+43,'text-anchor':'middle'},label);
+ }
+ document.getElementById('graph-title').textContent=remove?`Hypothetical removal of node ${u}`:'Tree rooted at 1';
+ document.getElementById('legend').textContent=remove?groups.map((g,i)=>`Piece ${i+1}: {${g.join(', ')}} → ${g.length} node${g.length===1?'':'s'}`).join(' · '):'Outlined node: active call · Waiting: ancestor paused in recursion · Returned: completed subtree size';
+}
+document.getElementById('prev').onclick=()=>{index=Math.max(0,index-1);draw();};
+document.getElementById('next').onclick=()=>{index=Math.min(events.length-1,index+1);draw();};
+document.getElementById('end').onclick=()=>{index=events.length-1;draw();};slider.oninput=()=>{index=Number(slider.value);draw();};
+new ResizeObserver(draw).observe(svg);draw();
+})();
+</script></body></html>
