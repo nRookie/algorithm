@@ -4,6 +4,14 @@ Topic: greedy choice of a median. Original: AcWing 104, Warehouse Location.
 [Source, official statements, and contract differences](SOURCE.md).
 [Submission code](Solution.kt).
 
+Your own implementation is saved in [LearnerSolution.kt](LearnerSolution.kt),
+with the required `kotlin.math.abs` import added. It sorts the input array
+in place and accumulates in Int. This is safe for LeetCode 462: each absolute
+difference is at most 2,000,000,000, and the judge guarantees the final sum
+fits Int. All contributions are nonnegative, so partial sums also fit.
+Unlike Solution.kt, your version intentionally changes the input order.
+Both files declare `class Solution`; compile or submit only one at a time.
+
 ## What are we minimizing?
 
 For positions or values a[0], ..., a[n-1], choose a common target x to minimize
