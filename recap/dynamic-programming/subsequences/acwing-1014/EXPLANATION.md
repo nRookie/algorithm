@@ -87,5 +87,6 @@ Unlike AcWing 1014, the remaining mountain must have a genuine increasing
 side and a genuine decreasing side, with at least three elements. Its input
 length is 3–1000 and a valid mountain is guaranteed possible.
 
-This is a related exercise, not an identical contract. The solution is left
-for you to implement independently.
+This is a related exercise, not an identical contract. Your completed
+[LeetCode 1671 solution and notes](../leetcode-1671-minimum-number-of-removals-to-make-mountain-array/README.md)
+record the valid-peak check and conversion from kept length to removals.

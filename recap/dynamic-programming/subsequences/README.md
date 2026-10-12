@@ -10,3 +10,6 @@
    Related practice: LeetCode 1671 (different output and stricter peak rules).
 
 Other files in acwing/dp/line/lineup remain for later recaps.
+
+Completed related practice: [LeetCode 1671 — Minimum Number of Removals to Make Mountain Array](leetcode-1671-minimum-number-of-removals-to-make-mountain-array/README.md),
+with your implementation and tests for valid peaks on both slopes.
