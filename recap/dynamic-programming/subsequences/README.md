@@ -13,3 +13,7 @@ Other files in acwing/dp/line/lineup remain for later recaps.
 
 Completed related practice: [LeetCode 1671 — Minimum Number of Removals to Make Mountain Array](leetcode-1671-minimum-number-of-removals-to-make-mountain-array/README.md),
 with your implementation and tests for valid peaks on both slopes.
+
+Maximum-sum practice: [LeetCode 1626 — Best Team With No Conflicts](leetcode-1626-best-team-with-no-conflicts/EXPLANATION.md),
+with your solution, age/score tie handling, and a maximum-sum non-decreasing
+subsequence explanation. Related to the AcWing 1016 discussion.
