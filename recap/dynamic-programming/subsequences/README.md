@@ -17,3 +17,8 @@ with your implementation and tests for valid peaks on both slopes.
 Maximum-sum practice: [LeetCode 1626 — Best Team With No Conflicts](leetcode-1626-best-team-with-no-conflicts/EXPLANATION.md),
 with your solution, age/score tie handling, and a maximum-sum non-decreasing
 subsequence explanation. Related to the AcWing 1016 discussion.
+
+Pair-ordering recap: [AcWing 1012 — Friendly Cities](acwing-1012/EXPLANATION.md),
+with your corrected Kotlin implementation, crossing proof, and complexity.
+Related practice: LeetCode 354 — Russian Doll Envelopes, which adds equal
+dimensions and a larger input limit.
