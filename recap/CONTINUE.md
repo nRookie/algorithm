@@ -12,11 +12,12 @@ Saved corrected code preserves addFirst/removeLast and collection storage.
 
 ## Next exercise
 
-Current next practice: LeetCode 1971 — Find if Path Exists in Graph. The user
-specifically wants explicit adjacency-list traversal, so use this edge-list
-reachability problem next. Nodes are 0..n-1; return Boolean for source to
-destination. No solution supplied yet. User explicitly deferred LeetCode
-1976 until after learning Dijkstra.
+LeetCode 1971 is now completed and saved under
+recap/graph/bfs/leetcode-1971-find-if-path-exists-in-graph. The learner built
+an undirected adjacency list and used BooleanArray visited plus
+addFirst/removeLast BFS. No algorithm corrections were needed. Seven local
+cases include a 200,000-node chain. Continue graph recap from here; the next
+exercise has not yet been selected. LeetCode 1976 stays deferred until Dijkstra.
 
 LeetCode 1091 is now completed: the learner implemented eight-direction BFS,
 then reused the input grid as the distance/visited storage. Saved in
