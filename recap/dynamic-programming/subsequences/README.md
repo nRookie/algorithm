@@ -22,3 +22,7 @@ Pair-ordering recap: [AcWing 1012 — Friendly Cities](acwing-1012/EXPLANATION.m
 with your corrected Kotlin implementation, crossing proof, and complexity.
 Related practice: LeetCode 354 — Russian Doll Envelopes, which adds equal
 dimensions and a larger input limit.
+
+[LeetCode 354 attempt](leetcode-354-russian-doll-envelopes/EXPLANATION.md):
+O(n²) baseline preserved and O(n log n) implementation completed, using
+width ordering, descending equal-width heights, and height LIS.

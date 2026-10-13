@@ -11,3 +11,4 @@ Recap uses direct explanations; interactive derivation is available on request.
 | [Intervals](intervals/README.md) | Sort and merge overlapping intervals; LeetCode 56 |
 | [Greedy](greedy/README.md) | Median minimizes total absolute distance; AcWing 104 / LeetCode 462 |
 | [Dynamic programming](dynamic-programming/README.md) | Subsequence DP; AcWing 1017 and related LeetCode 300 |
+| [Graphs](graph/README.md) | BFS distances and shortest-path counts; AcWing 1134 |
