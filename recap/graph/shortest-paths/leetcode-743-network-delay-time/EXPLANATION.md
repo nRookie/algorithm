@@ -1,5 +1,25 @@
 # LeetCode 743 — Network Delay Time
 
+## Learner's SPFA practice
+
+[SpfaSolution.kt](SpfaSolution.kt) saves the learner's FIFO implementation.
+Two queue-membership corrections were made: initialize inQueue[k], not
+inQueue[0]; and check !inQueue[v], not !inQueue[current], before adding v.
+The removed current node's flag has already been cleared, so checking that
+flag always allows insertion and fails to prevent duplicate pending neighbors.
+The unused State declaration was removed. All other algorithm choices remain.
+
+Remove current → clear its flag. Schedule v → check and set v's flag.
+Always update an improved distance even when v is already waiting; its pending
+turn uses the latest value. A processed node can return to the queue later.
+
+Run `bash recap/graph/shortest-paths/leetcode-743-network-delay-time/run.sh spfa`.
+See [AcWing 851](../acwing-851/EXPLANATION.md) for the correctness proof and FIFO
+rounds analysis: O(nm) worst-case time and O(n+m) total space. Here all weights
+are nonnegative, so there are no negative cycles. Once the queue empties, all
+reachable shortest distances are correct; return their maximum, or -1 if any
+node is unreachable. This implementation does not detect negative cycles.
+
 [Problem](https://leetcode.com/problems/network-delay-time/) · Medium.
 Directed weighted edges; nodes 1..n; signal starts at k. Return the time when
 every node has received the signal, or -1 if any node is unreachable.

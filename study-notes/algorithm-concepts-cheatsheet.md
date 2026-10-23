@@ -110,6 +110,31 @@ O(N); any separately constructed output still counts toward space usage.
 References: [Virtual indexing and its proof](../leetcode/74_search_a_2d_matrix/EXPLANATION.md),
 [Reverse traversal without input copies](../leetcode/67_add_binary/EXPLANATION.md).
 
+## Derive rearrangements by composing index mappings
+
+For a rearrangement that preserves every element, express where an arbitrary
+source index or coordinate must end up. Decompose that mapping into simpler
+operations, then substitute coordinates through them in order. If their
+composition equals the target mapping for every position, it proves the
+destination rule without relying on a few visual examples. Keep source-to-
+destination mappings distinct from formulas that read a source for each
+destination.
+
+For an n-by-n matrix, clockwise rotation requires `(r, c) → (c, n - 1 - r)`.
+Reverse row order, then exchange coordinates:
+`(r, c) → (n - 1 - r, c) → (c, n - 1 - r)`.
+Exchanging first instead requires reversing the resulting column coordinate.
+Operation order matters; reversing row order is a reflection, not a 180° rotation.
+
+A correct mapping alone does not make direct in-place writes safe: they can
+overwrite values still needed. For a transformation made of disjoint swap
+pairs, visit each pair once and leave fixed positions alone. Reversal visits
+half the mirrored pairs; square-matrix transpose visits one triangle outside
+the main diagonal. Visiting both members swaps twice and undoes the change.
+Do not assume every rearrangement decomposes into one pass of disjoint pairs.
+
+Reference: [Deriving rotation and its swap boundaries](../leetcode/48_rotate_image/EXPLANATION.md).
+
 ## Split a digit total into remainder and carry
 
 For nonnegative column total s in positional base k >= 2, the division identity
@@ -540,6 +565,23 @@ but pending duplicates must be counted in time and space analysis.
 
 Reference: [Jump Game III](../leetcode/1306_jump_game_iii/EXPLANATION.md).
 
+## Exhaust eligible candidates before advancing the outer scan
+
+Use `while` when one outer-loop state can expose several candidates that must
+be processed now. An `if` processes only one; a later outer iteration may not
+exist or may change the objective value. For a shortest valid interval, several
+starts can qualify at the same endpoint, and later starts give shorter lengths.
+With `[1,1,1,1,7]` and threshold 7, the last endpoint allows lengths 5 through 1.
+
+Prove both removal and stopping: a start already used for a valid interval
+cannot improve its length at a later endpoint. Stopping at the first invalid
+start requires candidate sums to be ordered. Nonnegative elements support this
+in ordinary sum windows; with negative elements, a monotonic prefix-sum deque
+can establish the needed order among retained candidates instead. This is not
+a universal instruction to replace every sliding-window `if` with `while`.
+
+Reference: [Repeated shrinking and deque proof](../recap/sliding-window/leetcode-862-shortest-subarray-with-sum-at-least-k/EXPLANATION.md).
+
 ## Count total work, not just states or loop nesting
 
 Time is the sum of work performed over all processed states. Visiting n states
@@ -752,6 +794,34 @@ empty choice is feasible; exact-fill states need an unreachable marker.
 
 References: [Layered reachability](../leetcode/1306_jump_game_iii/EXPLANATION.md),
 [Descending-capacity invariant](../atcoder/abc479/c/EXPLANATION.md).
+
+## Distinguish the number of optimal routes from the length of a witness route
+
+Define what a counter measures before choosing its update rule:
+
+| State | Meaning | Strictly better distance through u | Equal distance |
+| --- | --- | --- | --- |
+| ways[v] | Number of shortest routes to v | Replace with ways[u] | Add ways[u], modulo the required modulus |
+| edgeCount[v] | Edge count of the route responsible for dist[v] | Replace with edgeCount[u] + 1 | Ignore |
+
+Shortest-route counts add disjoint groups classified by their final edge. A
+better distance discards routes to the old distance. For Dijkstra counting,
+strictly positive weights ensure all shortest predecessors are processed before
+their destination; do not assume this ordering with zero-weight edges.
+
+SPFA's edgeCount measures one improving route, not the number of updates or
+alternative routes. A route with n edges repeats a vertex; the strict-relaxation
+rule is essential to using this threshold for negative-cycle detection. Updating
+counts on equal distances could falsely flag a zero-weight cycle. Update the
+count whenever distance improves, even if the vertex is already queued.
+To detect a negative cycle anywhere, seed all vertices at distance zero and
+enqueue all of them; a single source detects only reachable negative cycles.
+
+Example: two routes costing 5 with 2 and 3 edges give two shortest routes, not
+five. For cycle detection, the equal-cost alternative does not replace the
+current distance witness or its edge count.
+
+Reference: [Shortest-route counting](../recap/graph/shortest-paths/leetcode-1976-number-of-ways-to-arrive-at-destination/EXPLANATION.md).
 
 ## Process changed answers through their dependents
 
