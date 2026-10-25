@@ -281,6 +281,13 @@ entirely of passing candidates. With `left < right`, process the singleton
 after convergence. Establish that a passing candidate exists, or separately
 handle the case where none exists.
 
+For a nondecreasing sequence or implicitly evaluated function, equal-target
+positions form a contiguous block. Let lower be the first index with value
+`>= target` and upper the first with value `> target`, using the exclusive
+domain end when absent. The matching positions are `[lower, upper)`, so their
+count is `upper - lower`, including zero when equality is skipped. Equality
+itself need not be a monotone predicate; the two threshold predicates are.
+
 In a sorted array, first `>= target` and last `<= target` give the ends of
 the target's equal-value block once existence is verified. An inclusive
 first-qualifying search initialized with `right = N - 1` stops at the last
@@ -292,6 +299,108 @@ References: [Lower-bound proof](../leetcode/35_search_insert_position/EXPLANATIO
 
 For English wording about positions and ranges, see
 [the interview phrases cheatsheet](algorithm-interview-phrases.md#prepositions-for-positions-ranges-and-updates).
+
+## Define the counted object before optimizing enumeration
+
+Write the indices that uniquely identify one answer under the problem's
+definition. An interval is `(l, r)`; a pair of adjacent nonempty substrings
+is `(l, mid, r)` when occurrences are distinguished by position. Different
+split points are different pairs even when their outer interval is identical.
+Equal text at different positions is not automatically a duplicate; check
+whether uniqueness means positions or values.
+
+For each fixed outer choice, counting answers adds the number of valid inner
+choices. Adding one after finding a match instead counts outer choices with
+at least one witness. Stopping at the first match preserves existence, not
+multiplicity, unless uniqueness is proved. In `"kkk"`, the full interval has
+two equal-distinct-count splits: `"k" | "kk"` and `"kk" | "k"`.
+
+Treat "number of pairs/ways/splits" as a cue to define answer identity, and
+"exists/at least one" as a cue for an existence check; exact definitions take
+precedence over keywords. Before removing a loop, explain where all its valid
+choices are counted. Non-strict monotonicity can leave a plateau of matches,
+so finding one crossing need not find every answer.
+
+For nonempty subarrays, visiting every `0 <= left <= right < n` visits each
+positional candidate once: there are `n(n+1)/2`. Fix left and extend right to
+reuse state; moving left can change the meaning of that state, so reset it
+unless a correct removal/update rule has been established. Two endpoint indexes
+alone do not imply a sliding-window algorithm or linear work.
+
+Reference: [Endpoint enumeration and coverage proof](../leetcode/count_frequency_staircase_subarrays/EXPLANATION.md).
+
+## Maintain a violation count when updates affect only a few constraints
+
+If validity means every active item satisfies its condition, maintain the number
+of failing items. When an item changes, remove its old failure contribution and
+add its new one. Correct → wrong adds one; wrong → correct subtracts one;
+unchanged status contributes zero. Zero failures is equivalent to full validity.
+This makes validation O(1) when an update affects O(1) items and each condition
+is O(1) to evaluate. Retain the underlying state needed for future updates.
+
+A newly introduced item has no previous contribution: add only its new status.
+Targets must stay fixed, or all items affected by target changes must also be
+updated. For first-appearance targets, appending preserves existing ranks, but
+changing the start may change many ranks.
+
+Reference: [Incremental frequency validation](../leetcode/count_frequency_staircase_subarrays/EXPLANATION.md).
+
+## Prune only when every allowed continuation preserves failure
+
+A currently invalid candidate is not necessarily impossible to complete. Prove
+that no future allowed update can repair the violated condition before stopping.
+For a nondecreasing count and fixed exact target, exceeding the target is
+irreversible; being below it can recover. This proof ceases to apply if counts
+can decrease or targets can change. Pruning need not improve the worst-case bound.
+
+When abandoning a state, updates used only by its skipped continuation are
+unnecessary. In nested Kotlin loops, an unlabeled `break` exits the nearest
+loop and skips its remaining body, including any counting statement below it;
+it does not merely leave the surrounding `if/else` block.
+
+Reference: [Safe early stopping and break placement](../leetcode/count_frequency_staircase_subarrays/EXPLANATION.md).
+
+## Reuse search boundaries only when they move monotonically across queries
+
+Two separate proofs justify replacing repeated binary searches with moving
+pointers: values must be monotone within each query, and the first qualifying
+positions must never move backward as queries advance. Preserve each pointer
+between queries; with Q queries over N positions and constant-time evaluations,
+a constant number of advancing pointers costs O(Q + N) in total.
+
+Example: for fixed l, define `D(mid, r)` as distinct letters in `[l, mid]`
+minus distinct letters in `[mid + 1, r]`, with nonempty sides. Increasing mid
+cannot decrease D, so equal-count splits lie between the first `D >= 0` and
+first `D > 0`. Increasing r cannot increase D at an existing mid, so both
+boundaries only move right. Use r as the exclusive split-domain end. With
+constant-time range counts, scanning all r costs O(n) per l and O(n²) overall.
+The counts can come from precomputed 26-letter masks; include preprocessing
+time and space separately.
+
+Monotonicity within a query alone permits binary search, not pointer reuse.
+Count matches by boundary distance without enumerating them: the number of
+valid splits can be cubic even though the aggregate count takes quadratic time.
+
+Reference for both answer identity and moving boundaries:
+[Counting adjacent substring pairs](../leetcode/count_magical_substring_pairs_i/EXPLANATION.md).
+
+## Count exact values by subtracting nested threshold counts
+
+For an integer-valued statistic, `count(exactly d) = count(at most d) -
+count(at most d-1)` because the second set is contained in the first and their
+difference is precisely the d-valued objects. Preserve any grouping needed
+later: per-endpoint exact counts require subtracting per-endpoint threshold
+counts, not global totals.
+
+For substring distinct counts, removing characters cannot increase the count.
+A sliding window can therefore find the earliest valid start for each right
+endpoint under an at-most threshold; all later starts are also valid. Their
+number is `right - left + 1`. Store frequencies to handle repeated characters
+when shrinking. Each endpoint only advances, giving O(n) work per threshold.
+Enumerating a bounded statistic with A possible values costs O(An); small A is
+essential to the benefit. This is not a general guarantee for every statistic.
+
+Reference: [Exact distinct counts at each endpoint](../leetcode/count_magical_substring_pairs_i/EXPLANATION.md).
 
 ## Recover an order statistic from a partition of sorted sequences
 
@@ -620,6 +729,13 @@ References: [Counting range scans](../leetcode/45_jump_game_ii/dp/EXPLANATION.md
 Iteration and recursion describe how code executes. DFS can use recursive calls
 or an explicit stack; both may require memory proportional to search depth.
 
+A fixed-start traversal with only one possible next extension is a chain,
+so recursion can be expressed with a simple loop. Recursion does not inherently
+mean exponential branching: count actual choices and states. Pruning impossible
+continuations is not a greedy choice of a locally best candidate.
+
+Reference: [Subarray enumeration versus DFS, DP, and sliding windows](../leetcode/count_frequency_staircase_subarrays/EXPLANATION.md).
+
 Dynamic programming stores and reuses subproblem results. It can be recursive
 or iterative. Replacing recursion with loops does not by itself create DP.
 BFS organizes work by distance; DP organizes it around subproblem dependencies.
@@ -673,6 +789,17 @@ Threshold queries can justify merging categories: if every query is `value >= h`
 with h <= U, replacing values above U with U preserves those answers. It does
 not preserve exact-value queries, sums, or distinctions among larger values.
 For example, capping at 5 preserves `value >= 4`, but not `value == 100`.
+
+When every choice in a left group is compatible with every choice in a right
+group, their Cartesian product has `leftCount * rightCount` pairs. Sum these
+products only over disjoint groups, so each answer has one group identity.
+Fixing a separator can make choices independent; matching categories alone
+does not justify multiplication when additional cross-side constraints remain.
+For adjacent substrings, fix the split, then group each side by distinct-letter
+count. Equal counts suffice even if their actual letter sets differ. This
+counts positional choices without storing each choice or enumerating each pair.
+
+Reference: [Group substring pairs by split and distinct count](../leetcode/count_magical_substring_pairs_i/EXPLANATION.md).
 
 Prefix counts answer “at most”; suffix counts answer “at least.” Add counts of
 disjoint buckets to avoid double-counting. Scanning candidate thresholds from

@@ -79,6 +79,24 @@ solution has a further improvement, distinguish it from their current implementa
 
 ## Execution diagrams and notes
 
+### Saved solution comments for quick recap
+
+When saving or updating algorithm solution code, start each solution file with
+a comment titled "Interview explanation": a concise spoken explanation of the
+approach, why it works, and time/auxiliary-space complexity, including important
+assumptions. Place it before imports or declarations where language syntax permits.
+
+Add concise line-by-line comments to meaningful code lines: declarations and
+state definitions, initialization, loop bounds, conditions, updates, calls, and
+returns. Explain their purpose or invariant rather than merely reading syntax
+aloud. Bare braces, blank lines, and continuation punctuation need no comments.
+Keep comments in English unless requested otherwise. Preserve judge-compatible
+signatures and the learner's approach; annotation alone must not change behavior.
+Apply this to each saved alternative solution, not just the primary file. Keep
+long proofs and traces in EXPLANATION.md; the source should support a quick recap.
+This does not require commenting test harnesses line by line or bulk rewriting
+old solutions unless the user requests it.
+
 When requested or helpful, use the smallest useful visual: a state table for
 changing variables, Mermaid for control flow, or a text diagram for pointers,
 trees, stacks, and queues. A static trace is sufficient for many exercises;

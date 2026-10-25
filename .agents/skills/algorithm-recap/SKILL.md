@@ -65,6 +65,12 @@ The subtopic level is optional. Add a subtopic README when that level exists.
 - EXPLANATION.md: cleaned explanations and references.
 - Solution.kt: Kotlin implementation; keep test code separate.
 
+For every saved solution and alternative, follow
+[algorithm-practice's saved solution comment format](../algorithm-practice/SKILL.md#saved-solution-comments-for-quick-recap):
+an interview explanation at the top of the source file, then concise line-by-line
+comments on meaningful code lines. Apply this when creating or updating requested
+solutions; do not bulk rewrite unrelated older files.
+
 Preserve original material. Do not move or overwrite existing solutions.
 If a problem already exists in the repository, link to it and reuse relevant
 notes or runners rather than creating unnecessary duplicates. For subsequent

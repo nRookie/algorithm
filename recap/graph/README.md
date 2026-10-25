@@ -1,5 +1,11 @@
 # Graph traversal and shortest paths
 
+Completed Kruskal practice: [LeetCode 1584 — Min Cost to Connect All Points](minimum-spanning-tree/leetcode-1584-min-cost-to-connect-all-points/EXPLANATION.md),
+with the learner's annotated implementation and minimum-spanning-tree proof.
+
+Completed union-find recap: [LeetCode 547 — Number of Provinces](union-find/leetcode-547-number-of-provinces/EXPLANATION.md).
+Next: Kruskal minimum spanning trees, using union-find to detect component merges.
+
 Latest recap: [AcWing 851 — SPFA](shortest-paths/acwing-851/EXPLANATION.md),
 including the learner's corrected implementation, proof, and O(nm) analysis.
 Next practice: reimplement LeetCode 743 with SPFA.
